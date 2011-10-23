@@ -5,11 +5,18 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import com.mysql.jdbc.StringUtils;
+import com.sun.xml.internal.fastinfoset.algorithm.BuiltInEncodingAlgorithm.WordListener;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class LawCommandExecutor implements CommandExecutor {
 	private static final String PLUGIN_COMMAND_NAME = "law";
+	private static final String COMMAND_METHOD_PREFIX = "command";
 	
 	private final Law plugin;
 	
@@ -27,20 +34,24 @@ public class LawCommandExecutor implements CommandExecutor {
 		if (command.getName().equalsIgnoreCase(PLUGIN_COMMAND_NAME)) {
 			if (args.length <= 0) {
 				// If there are no arguments to the command, we know which method to call
-				this.law(sender, args);
+				this.root(sender, args);
 			} else {
 				// Otherwise the first argument is the name of the command (and method)
 				// we actually want to execute.
 				
-				// So we first get this command name
+				// So we first get this command name in lower case
 				String lawCommandName = args[0].toLowerCase();
 				
-				plugin.logMessage(lawCommandName);
+				// Then capitalise it
+				lawCommandName = Character.toUpperCase(lawCommandName.charAt(0)) + lawCommandName.substring(1);
+				
+				// And use that to create the final method name we are looking for
+				String methodName = COMMAND_METHOD_PREFIX + lawCommandName;
 				
 				// Then attempt to find the respective method on this class
 				Method method = null;
 				try {
-					method = this.getClass().getMethod(lawCommandName, CommandSender.class, String[].class);
+					method = this.getClass().getMethod(methodName, CommandSender.class, String[].class);
 				} catch (SecurityException e) {
 					// The command does not exist as a method and therefore cannot be called
 				} catch (NoSuchMethodException e) {
@@ -75,17 +86,43 @@ public class LawCommandExecutor implements CommandExecutor {
 		return true;
 	}
 
-	private void law(CommandSender sender, String[] args) {
-		sender.sendMessage("/law imprison");
-		sender.sendMessage("/law uninprison");
+	private void root(CommandSender sender, String[] args) {
+		Method[] methods = this.getClass().getDeclaredMethods();
+		String name = null;
+		Boolean commandsExist = false;
+		
+		plugin.sendMessage(sender, "Command list:");
+		
+		for (Method method : methods) {
+			name = method.getName();
+			if (name.startsWith(COMMAND_METHOD_PREFIX))
+			{
+				name = name.substring(COMMAND_METHOD_PREFIX.length()).toLowerCase();
+				sender.sendMessage("/law " + name);
+				commandsExist = true;
+			}
+		}
+		
+		if (!commandsExist) {
+			sender.sendMessage("There are no commands yet.");
+		}
 	}
 	
-	public void imprison(CommandSender sender, String[] args) {
+	public void commandImprison(CommandSender sender, String[] args) {
 		if (args.length == 2) {
 			String prisonerName = args[1];
 			plugin.sendMessage(sender, "imprisoned " + ChatColor.AQUA + prisonerName);
 		} else {
-			plugin.sendMessage(sender, ChatColor.RED + "usage: /law imprison <player>");
+			plugin.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " imprison <player>");
+		}
+	}
+	
+	public void commandFree(CommandSender sender, String[] args) {
+		if (args.length == 2) {
+			String prisonerName = args[1];
+			plugin.sendMessage(sender, "freed " + ChatColor.AQUA + prisonerName);
+		} else {
+			plugin.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " free <player>");
 		}
 	}
 }
