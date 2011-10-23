@@ -142,12 +142,11 @@ public class LawCommandExecutor implements CommandExecutor {
 			// Imprison the target player in the default (null) cell.
 			if (prison.hasCell(null)) {
 				prison.imprisonPlayer(targetPlayer, null);
+				this.law.sendMessage(sender, "imprisoned " + ChatColor.AQUA + playerName);
 			} else {
 				this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + "The selected prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " does not have a default cell.");
 				this.law.sendMessage(sender, "Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison setdefaultcell" + ChatColor.WHITE + " to set where new inmates will spawn.");
 			}
-			
-			this.law.sendMessage(sender, "imprisoned " + ChatColor.AQUA + playerName);
 		} else {
 			this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " imprison <player>");
 		}

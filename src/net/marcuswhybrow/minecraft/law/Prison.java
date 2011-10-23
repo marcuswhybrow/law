@@ -51,7 +51,7 @@ public class Prison {
 	}
 	
 	public void setDefaultCell(Location cellLocation, Boolean save) {
-		this.defaultCell = new DefaultCell(this, cellLocation);
+		this.defaultCell = new DefaultCell(this, cellLocation, save);
 	}
 	
 	public void addCell(String cellName, Location cellLocation) {
