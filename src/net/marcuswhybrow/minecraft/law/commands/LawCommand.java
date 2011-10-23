@@ -1,12 +1,15 @@
-package net.marcuswhybrow.minecraft.law;
+package net.marcuswhybrow.minecraft.law.commands;
 
+import net.marcuswhybrow.minecraft.law.Law;
+import net.marcuswhybrow.minecraft.law.LawWorld;
+import net.marcuswhybrow.minecraft.law.Plugin;
+import net.marcuswhybrow.minecraft.law.Prison;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalNameException;
 import net.marcuswhybrow.minecraft.law.exceptions.PrisonAlreadyExistsException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,7 +21,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-public class LawCommandExecutor implements CommandExecutor {
+public class LawCommand implements CommandExecutor {
 	private static final String PLUGIN_COMMAND_NAME = "law";
 	private static final String COMMAND_METHOD_PREFIX = "command";
 	
@@ -26,7 +29,7 @@ public class LawCommandExecutor implements CommandExecutor {
 	private final Plugin plugin;
 	private FileConfiguration config;
 	
-	public LawCommandExecutor() {
+	public LawCommand() {
 		this.law = Law.get();
 		this.plugin = law.getPlugin();
 		this.config = this.plugin.getConfig();

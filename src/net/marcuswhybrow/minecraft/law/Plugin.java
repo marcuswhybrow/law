@@ -2,9 +2,8 @@ package net.marcuswhybrow.minecraft.law;
 
 import java.util.logging.Logger;
 
-import net.minecraft.server.ConsoleCommandHandler;
+import net.marcuswhybrow.minecraft.law.commands.LawCommand;
 
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Plugin extends JavaPlugin {
@@ -17,7 +16,7 @@ public class Plugin extends JavaPlugin {
 		Law law = Law.get();
 		law.setPlugin(this);
 		
-		getCommand("law").setExecutor(new LawCommandExecutor());
+		getCommand("law").setExecutor(new LawCommand());
 		
 		law.readConfig();
 	}

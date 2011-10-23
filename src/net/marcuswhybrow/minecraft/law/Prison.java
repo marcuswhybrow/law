@@ -2,16 +2,10 @@ package net.marcuswhybrow.minecraft.law;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 
 import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-
-import com.sun.tools.javac.util.List;
 
 public class Prison {
 	private String name;
@@ -149,7 +143,7 @@ public class Prison {
 			// Remove from memory
 			cells.remove(this.getName());
 			
-			// Remove from config file
+			// Remove from configuration file
 			Plugin plugin = Law.get().getPlugin();
 			FileConfiguration config = plugin.getConfig();
 			config.set(getConfigPrefix(), null);
