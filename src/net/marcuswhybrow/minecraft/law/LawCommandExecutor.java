@@ -210,7 +210,8 @@ public class LawCommandExecutor implements CommandExecutor {
 						if (selectedPrison == prison) {
 							lawWorld.setSelectedPrison(player, null);
 						}
-						this.law.sendMessage(sender, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been deleted. Use \"/" + PLUGIN_COMMAND_NAME + " switchto\" to select another prison to work on.");
+						
+						this.law.sendMessage(sender, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been deleted. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select" + ChatColor.WHITE + " to choose another prison to work on.");
 					}
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison remove <prison-name>");
@@ -221,11 +222,28 @@ public class LawCommandExecutor implements CommandExecutor {
 					Prison selectedPrison = lawWorld.getSelectedPrison(player);
 					
 					this.law.sendMessage(sender, "Prison list:");
+					if (prisons.length == 0) {
+						sender.sendMessage("    There are no prisons yet. Create one using " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison create <prison-name>");
+					}
 					for (Prison prison : prisons) {
 						sender.sendMessage("    " + (prison == selectedPrison ? ChatColor.AQUA : ChatColor.WHITE) + prison.getName());
 					}
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison list");
+				}
+			} else if ("select".equals(action)) {
+				if (args.length == 3) {
+					String prisonName = args[2].toLowerCase();
+					Prison prison = lawWorld.getPrison(prisonName);
+					
+					if (prison == null) {
+						this.law.sendMessage(sender, ChatColor.RED + "A prison with that name does not exist.");
+					} else {
+						lawWorld.setSelectedPrison(player, prison.getName());
+						this.law.sendMessage(sender, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been selected. All prison commands now apply to this prison.");
+					}
+				} else {
+					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison select <prison-name>");
 				}
 			} else {
 				this.law.sendMessage(sender, "Unknown command. Type \"/law prison\" for the list.");
@@ -239,7 +257,7 @@ public class LawCommandExecutor implements CommandExecutor {
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison create <prison-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison delete <prison-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison list");
-			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison switchto <prison-name>");
+			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison select <prison-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison addcell <cell-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison removecell <cell-name>");
 		}
