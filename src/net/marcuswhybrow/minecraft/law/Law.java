@@ -78,10 +78,25 @@ public class Law {
 				double x, y, z;
 				Location cellLocation;
 				
+				Double defaultCellX, defaultCellY, defaultCellZ, defaultCellPitch, defaultCellYaw;
+				
 				if (prisons != null) {
 					for (String prisonName : prisons.getKeys(false)) {
 						prison = new Prison(lawWorld, prisonName, false);
 						lawWorld.addPrison(prison);
+						
+						// Retrieve the default cell for this prison
+						defaultCellX = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.x");
+						defaultCellY = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.y");
+						defaultCellZ = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.z");
+						defaultCellPitch = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.pitch");
+						defaultCellYaw = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.yaw");
+						
+						if (defaultCellX != null && defaultCellY != null && defaultCellZ != null && defaultCellPitch != null && defaultCellYaw != null) {
+							prison.setDefaultCell(new Location(world, defaultCellX, defaultCellY, defaultCellZ, new Float(defaultCellYaw), new Float(defaultCellPitch)), false);
+						}
+						
+						// Create the Prison cells
 						cells = config.getConfigurationSection("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".cells");
 						if (cells != null) {
 							for (String cellName : cells.getKeys(false)) {
