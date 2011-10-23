@@ -11,14 +11,14 @@ public class Plugin extends JavaPlugin {
 	
 	@Override
 	public void onEnable() {
-		log.info(Law.ON_ENABLE_MESSAGE);
-		
 		Law law = Law.get();
 		law.setPlugin(this);
 		
 		getCommand("law").setExecutor(new LawCommand());
 		
 		law.readConfig();
+		
+		log.info(Law.ON_ENABLE_MESSAGE);
 	}
 	
 	@Override
