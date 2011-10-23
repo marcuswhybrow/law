@@ -1,3 +1,7 @@
 name: Law
 main: net.marcuswhybrow.minecraft.law.Law
 version: 0.1
+commands:
+    law:
+        description: The law command list
+        usage: /law
