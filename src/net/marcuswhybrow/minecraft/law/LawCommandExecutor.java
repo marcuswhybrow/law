@@ -206,12 +206,26 @@ public class LawCommandExecutor implements CommandExecutor {
 					} else {
 						prison.delete();
 						
+						this.law.sendMessage(player, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been deleted.");
+						
+						Prison[] prisons = lawWorld.getPrisons();
 						Prison selectedPrison = lawWorld.getSelectedPrison(player);
 						if (selectedPrison == prison) {
-							lawWorld.setSelectedPrison(player, null);
+							// Determine how many prisons are left, so as to perform the most appropriate action
+							if (prisons.length == 0) {
+								lawWorld.setSelectedPrison(player, null);
+							} else if (prisons.length >= 2) {
+								this.law.sendMessage(player, "Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select" + ChatColor.WHITE + " to choose one of the remaining " + prisons.length + " prisons to work on.");
+							}
 						}
 						
-						this.law.sendMessage(sender, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been deleted. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select" + ChatColor.WHITE + " to choose another prison to work on.");
+						if (prisons.length == 0) {
+							this.law.sendMessage(player, "There are no remaining prisons. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison create <prison-name>" + ChatColor.WHITE + " to start a new one.");
+						} if (prisons.length == 1) {
+							String newPrisonName = prisons[0].getName();
+							lawWorld.setSelectedPrison(player, newPrisonName);
+							this.law.sendMessage(player, "The only remaining prison " + ChatColor.AQUA + newPrisonName + ChatColor.WHITE + " is now the selected prison.");
+						}
 					}
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison remove <prison-name>");
