@@ -27,7 +27,7 @@ public class LawWorld {
 		} else {
 			if (name.matches("[a-zA-Z0-9_-]+")) {
 				Prison prison = new Prison(this, name);
-				prisons.put(prison.getName(), prison);
+				this.addPrison(prison);
 				return prison;
 			} else {
 				throw new IllegalNameException();

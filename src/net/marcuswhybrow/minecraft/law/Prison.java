@@ -26,7 +26,7 @@ public class Prison {
 			// Save the new name
 			Plugin plugin = Law.get().getPlugin();
 			FileConfiguration config = plugin.getConfig();
-			config.createSection(this.getConfigPrefix());
+			config.set(this.getConfigPrefix() + ".name", this.name);
 			plugin.saveConfig();
 		}
 	}
@@ -51,10 +51,10 @@ public class Prison {
 			// Save the new cell
 			Plugin plugin = Law.get().getPlugin();
 			FileConfiguration config = plugin.getConfig();
-			String prefix = this.getConfigPrefix() + ".cells." + cellName + ".location.";
-			config.set(prefix + "x", cellLocation.getX());
-			config.set(prefix + "y", cellLocation.getY());
-			config.set(prefix + "z", cellLocation.getZ());
+			String prefix = this.getConfigPrefix() + ".cells." + cellName + ".location";
+			config.set(prefix + ".x", cellLocation.getX());
+			config.set(prefix + ".y", cellLocation.getY());
+			config.set(prefix + ".z", cellLocation.getZ());
 			plugin.saveConfig();
 		}
 	}
@@ -70,10 +70,10 @@ public class Prison {
 			// Remove the cell
 			Plugin plugin = Law.get().getPlugin();
 			FileConfiguration config = plugin.getConfig();
-			String prefix = this.getConfigPrefix() + ".cells." + cellName + ".location.";
-			config.set(prefix + "x", null);
-			config.set(prefix + "y", null);
-			config.set(prefix + "z", null);
+			String prefix = this.getConfigPrefix() + ".cells." + cellName + ".location";
+			config.set(prefix + ".x", null);
+			config.set(prefix + ".y", null);
+			config.set(prefix + ".z", null);
 			plugin.saveConfig();
 		}
 	}
