@@ -1,5 +1,5 @@
 name: Law
-main: net.marcuswhybrow.minecraft.law.Law
+main: net.marcuswhybrow.minecraft.law.Plugin
 version: 0.1
 commands:
     law:
