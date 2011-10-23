@@ -1,5 +1,8 @@
 package net.marcuswhybrow.minecraft.law;
 
+import net.marcuswhybrow.minecraft.law.exceptions.IllegalNameException;
+import net.marcuswhybrow.minecraft.law.exceptions.PrisonAlreadyExistsException;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;

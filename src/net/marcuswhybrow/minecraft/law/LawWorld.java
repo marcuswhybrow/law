@@ -2,6 +2,9 @@ package net.marcuswhybrow.minecraft.law;
 
 import java.util.HashMap;
 
+import net.marcuswhybrow.minecraft.law.exceptions.IllegalNameException;
+import net.marcuswhybrow.minecraft.law.exceptions.PrisonAlreadyExistsException;
+
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
