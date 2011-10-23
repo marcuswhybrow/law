@@ -79,6 +79,8 @@ public class Prison {
 	}
 	
 	public void delete() {
+		lawWorld.removePrison(this);
+		
 		Plugin plugin = Law.get().getPlugin();
 		FileConfiguration config = plugin.getConfig();
 		config.set(this.getConfigPrefix(), null);
@@ -86,6 +88,6 @@ public class Prison {
 	}
 	
 	private String getConfigPrefix() {
-		return "worlds." + this.lawWorld.getName() + ".prisons." + this.name;
+		return "worlds." + this.lawWorld.getName() + ".prisons." + this.getName();
 	}
 }

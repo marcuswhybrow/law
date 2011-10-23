@@ -196,7 +196,7 @@ public class LawCommandExecutor implements CommandExecutor {
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison create <prison-name>");
 				}
-			} else if ("remove".equals(action)) {
+			} else if ("delete".equals(action)) {
 				if (args.length == 3) {
 					String prisonName = args[2].toLowerCase();
 					Prison prison = lawWorld.getPrison(prisonName);
@@ -205,6 +205,12 @@ public class LawCommandExecutor implements CommandExecutor {
 						this.law.sendMessage(sender, ChatColor.RED + "A prison with that name does not exist.");
 					} else {
 						prison.delete();
+						
+						Prison selectedPrison = lawWorld.getSelectedPrison(player);
+						if (selectedPrison == prison) {
+							lawWorld.setSelectedPrison(player, null);
+						}
+						this.law.sendMessage(sender, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been deleted. Use \"/" + PLUGIN_COMMAND_NAME + " switchto\" to select another prison to work on.");
 					}
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison remove <prison-name>");
@@ -221,6 +227,8 @@ public class LawCommandExecutor implements CommandExecutor {
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison list");
 				}
+			} else {
+				this.law.sendMessage(sender, "Unknown command. Type \"/law prison\" for the list.");
 			}
 		} else {
 			// List the "prison" commands
@@ -229,7 +237,7 @@ public class LawCommandExecutor implements CommandExecutor {
 			
 			this.law.sendMessage(sender, "Current prison: " + prisonName);
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison create <prison-name>");
-			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison remove <prison-name>");
+			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison delete <prison-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison list");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison switchto <prison-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison addcell <cell-name>");

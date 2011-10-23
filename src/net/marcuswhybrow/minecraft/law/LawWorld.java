@@ -52,8 +52,8 @@ public class LawWorld {
 		prisons.put(prison.getName(), prison);
 	}
 	
-	public Prison removePrison(String name) {
-		return prisons.remove(name);
+	public Prison removePrison(Prison prison) {
+		return prisons.remove(prison.getName());
 	}
 	
 	public Prison setSelectedPrison(Player player, String name) { 
@@ -61,18 +61,31 @@ public class LawWorld {
 	}
 	
 	public Prison setSelectedPrison(Player player, String name, Boolean save) {
-		Prison prison = prisons.get(name);
-		if (prison != null) {
-			selectedPrisons.put(player, prison);
-			
+		Plugin plugin = Law.get().getPlugin();
+		FileConfiguration config = plugin.getConfig();
+		
+		Prison prison = null;
+		
+		if (name == null) {
+			selectedPrisons.remove(player);
 			if (save) {
 				// Save the selected prison
-				Plugin plugin = Law.get().getPlugin();
-				FileConfiguration config = plugin.getConfig();
-				config.set("worlds." + this.getName() + ".active_prisons." + player.getDisplayName(), prison.getName());
-				plugin.saveConfig();
+				config.set("worlds." + this.getName() + ".active_prisons." + player.getDisplayName(), null);
+			}
+		} else {
+			prison = prisons.get(name);
+			if (prison != null) {
+				selectedPrisons.put(player, prison);
+				
+				if (save) {
+					// Save the selected prison
+					config.set("worlds." + this.getName() + ".active_prisons." + player.getDisplayName(), prison.getName());
+				}
 			}
 		}
+		
+		plugin.saveConfig();
+		
 		return prison;
 	}
 	
