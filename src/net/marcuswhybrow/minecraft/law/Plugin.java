@@ -17,9 +17,9 @@ public class Plugin extends JavaPlugin {
 		Law law = Law.get();
 		law.setPlugin(this);
 		
-		LawCommandExecutor lce = new LawCommandExecutor();
+		getCommand("law").setExecutor(new LawCommandExecutor());
 		
-		getCommand("law").setExecutor(lce);
+		law.readConfig();
 	}
 	
 	@Override

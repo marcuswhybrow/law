@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -168,6 +169,14 @@ public class LawCommandExecutor implements CommandExecutor {
 	}
 	
 	public void commandPrison(CommandSender sender, String[] args) {
+		if (sender instanceof Player == false) {
+			law.sendMessage(sender, "The \"/" + PLUGIN_COMMAND_NAME + " prison\" commands can only be used in game (meaning not from the console.)");
+			return;
+		}
+		
+		Player player = (Player) sender;
+		LawWorld lawWorld = law.getOrCreateLawWorld(player.getWorld());
+		
 		if (args.length >= 2) {
 			String action = args[1].toLowerCase();
 			
@@ -176,8 +185,8 @@ public class LawCommandExecutor implements CommandExecutor {
 					String prisonName = args[2].toLowerCase();
 					
 					try {
-						Prison prison = PrisonManager.get().createPrison(prisonName);
-						PrisonManager.get().setSelectedPrison(sender, prison.getName());
+						Prison prison = lawWorld.createPrison(prisonName);
+						lawWorld.setSelectedPrison(player, prison.getName());
 						this.law.sendMessage(sender, "Prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been created.");
 					} catch (PrisonAlreadyExistsException e) {
 						this.law.sendMessage(sender, ChatColor.RED + "A prison with that name already exists.");
@@ -190,7 +199,7 @@ public class LawCommandExecutor implements CommandExecutor {
 			} else if ("remove".equals(action)) {
 				if (args.length == 3) {
 					String prisonName = args[2].toLowerCase();
-					Prison prison = PrisonManager.get().getPrison(prisonName);
+					Prison prison = lawWorld.getPrison(prisonName);
 					
 					if (prison == null) {
 						this.law.sendMessage(sender, ChatColor.RED + "A prison with that name does not exist.");
@@ -202,9 +211,8 @@ public class LawCommandExecutor implements CommandExecutor {
 				}
 			} else if ("list".equals(action)) {
 				if (args.length == 2) {
-					PrisonManager pm = PrisonManager.get();
-					Prison[] prisons = pm.getPrisons();
-					Prison selectedPrison = pm.getSelectedPrison(sender);
+					Prison[] prisons = lawWorld.getPrisons();
+					Prison selectedPrison = lawWorld.getSelectedPrison(player);
 					
 					this.law.sendMessage(sender, "Prison list:");
 					for (Prison prison : prisons) {
@@ -216,7 +224,7 @@ public class LawCommandExecutor implements CommandExecutor {
 			}
 		} else {
 			// List the "prison" commands
-			Prison prison = PrisonManager.get().getSelectedPrison(sender);
+			Prison prison = lawWorld.getSelectedPrison(player);
 			String prisonName = prison != null ? prison.getName() : "NONE";
 			
 			this.law.sendMessage(sender, "Current prison: " + prisonName);
