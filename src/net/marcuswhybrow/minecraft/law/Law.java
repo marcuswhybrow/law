@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import net.marcuswhybrow.minecraft.law.prison.Prison;
+import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -24,6 +25,9 @@ public class Law {
 	public static final String ON_ENABLE_MESSAGE = PLUGIN_NAME + " enabled.";
 	public static final String ON_DISABLE_MESSAGE = PLUGIN_NAME + " disabled.";
 	public static final String MESSAGE_PREFIX = "[" + PLUGIN_NAME + "] ";
+	
+	public static final boolean FORCE_FULL_SAVE = true;
+	
 	
 	private final Logger log = Logger.getLogger("Minecraft");
 	private Plugin plugin = null;
@@ -69,18 +73,21 @@ public class Law {
 			LawWorld lawWorld;
 			ConfigurationSection prisons;
 			ConfigurationSection activePrisons;
+			String prefix = null;
 			
 			for (String worldName : worlds.getKeys(false)) {
 				world = plugin.getServer().getWorld(worldName);
-				lawWorld = new LawWorld(world);
+				lawWorld = new LawWorld(world, false);
 				this.putLawWorld(lawWorld);
 				
+				prefix = "worlds." + lawWorld.getName() + ".prisons";
+				
 				// Create Prison instances
-				prisons = config.getConfigurationSection("worlds." + lawWorld.getName() + ".prisons");
+				prisons = config.getConfigurationSection(prefix);
 				
 				Prison prison;
 				ConfigurationSection cells;
-				double x, y, z;
+				double x, y, z, pitch, yaw;
 				Location cellLocation;
 				
 				Double defaultCellX, defaultCellY, defaultCellZ, defaultCellPitch, defaultCellYaw;
@@ -91,57 +98,41 @@ public class Law {
 						prison = new Prison(lawWorld, prisonName, false);
 						lawWorld.addPrison(prison);
 						
-						// Retrieve the default cell for this prison
-						defaultCellX = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.x");
-						defaultCellY = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.y");
-						defaultCellZ = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.z");
-						defaultCellPitch = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.pitch");
-						defaultCellYaw = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.yaw");
-						
-						if (defaultCellX != 0 || defaultCellY != 0 || defaultCellZ != 0) {
-							prison.setDefaultCell(new Location(world, defaultCellX, defaultCellY, defaultCellZ, new Float(defaultCellYaw), new Float(defaultCellPitch)), false);
-						}
-						
-						// Retrieve default cell prisoners
-						@SuppressWarnings("unchecked")
-						List<String> imprisonedPlayersList = config.getList("worlds." + lawWorld.getName() + ".prisons." + prisonName + ".default_cell.imprisoned_players");
-						
-						if (imprisonedPlayersList != null) {
-							Set<String> imprisonedPlayersSet = new HashSet<String>(imprisonedPlayersList);
-							Iterator<String> it = imprisonedPlayersSet.iterator();
-							String playerName;
-							
-							while (it.hasNext()) {
-								playerName = it.next();
-								logMessage("Imprisoning " + playerName + " in " + prison.getName() + " in cell default_cell");
-								lawWorld.imprisonPlayer(playerName, prison.getName(), null, false);
-							}
-						}
+						prefix += "." + prison.getName();
 						
 						// Retrieve the exit point for this prison
-						exitPointX = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.x");
-						exitPointY = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.y");
-						exitPointZ = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.z");
-						exitPointPitch = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.pitch");
-						exitPointYaw = config.getDouble("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".default_cell.location.yaw");
+						exitPointX = config.getDouble(prefix + ".exit_point.location.x");
+						exitPointY = config.getDouble(prefix + ".exit_point.location.y");
+						exitPointZ = config.getDouble(prefix + ".exit_point.location.z");
+						exitPointPitch = config.getDouble(prefix + ".exit_point.location.pitch");
+						exitPointYaw = config.getDouble(prefix + ".exit_point.location.yaw");
 						
 						if (exitPointX != 0 || exitPointY != 0 || exitPointZ != 0) {
-							prison.setExitPoint(new Location(world, exitPointX, exitPointY, exitPointZ, new Float(exitPointYaw), new Float(exitPointPitch)), false);
+							prison.setExitPoint(new Location(world, exitPointX, exitPointY, exitPointZ, new Float(exitPointYaw), new Float(exitPointPitch)));
 						}
 						
 						// Create the Prison cells
-						cells = config.getConfigurationSection("worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".cells");
+						cells = config.getConfigurationSection(prefix + ".cells");
 						if (cells != null) {
 							for (String cellName : cells.getKeys(false)) {
-								String prefix = "prisons." + prisonName + ".cells." + cellName + ".location.";
-								x = config.getDouble(prefix + "x");
-								y = config.getDouble(prefix + "x");
-								z = config.getDouble(prefix + "x");
-								cellLocation = new Location(world, x, y, z);
+								prefix += ".cells." + cellName;
+								x = config.getDouble(prefix + ".location.x");
+								y = config.getDouble(prefix + ".location.y");
+								z = config.getDouble(prefix + ".location.z");
+								pitch = config.getDouble(prefix + ".location.pitch");
+								yaw = config.getDouble(prefix + ".location.yaw");
+								cellLocation = new Location(world, x, y, z, new Float(pitch), new Float(yaw));
 								
-								prison.addCell(cellName, cellLocation, false);
+								if (PrisonCell.DEFAULT_NAME.equals(cellName)) {
+									prison.createCellAsDefault(cellLocation);
+								} else {
+									prison.createCell(cellName, cellLocation);
+								}
 								
-								imprisonedPlayersList = config.getList("worlds." + lawWorld.getName() + ".prisons." + prisonName + ".cells." + cellName + ".imprisoned_players");
+								prefix += ".imprisoned_players";
+								
+								@SuppressWarnings("unchecked")
+								List<String> imprisonedPlayersList = config.getList(prefix);
 								
 								if (imprisonedPlayersList != null) {
 									Set<String> imprisonedPlayersSet = new HashSet<String>(imprisonedPlayersList);
@@ -150,8 +141,7 @@ public class Law {
 									
 									while (it.hasNext()) {
 										playerName = it.next();
-										logMessage("Imprisoning " + playerName + " in " + prison.getName() + " in cell " + cellName);
-										lawWorld.imprisonPlayer(playerName, prison.getName(), cellName, false);
+										lawWorld.imprisonPlayer(playerName, prison.getName(), cellName);
 									}
 								}
 							}
@@ -166,9 +156,12 @@ public class Law {
 				if (activePrisons != null) {
 					for (String playerDisplayName : activePrisons.getKeys(false)) {
 						prisonName = config.getString("worlds." + lawWorld.getName() + ".active_prisons." + playerDisplayName);
-						lawWorld.setSelectedPrison(playerDisplayName, prisonName, false);
+						lawWorld.setSelectedPrison(playerDisplayName, prisonName);
 					}
 				}
+				
+				// Activates all created models including and contained by the LawWorld
+				lawWorld.setActive(true);
 			}
 		}
 	}
@@ -192,5 +185,12 @@ public class Law {
 	
 	public void putWorld(World world) {
 		this.putLawWorld(new LawWorld(world));
+	}
+	
+	public void fullSave() {
+		Iterator<LawWorld> it = worlds.values().iterator();
+		while (it.hasNext()) {
+			it.next().save(Law.FORCE_FULL_SAVE);
+		}
 	}
 }

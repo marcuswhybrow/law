@@ -1,6 +1,8 @@
 package net.marcuswhybrow.minecraft.law;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalNameException;
 import net.marcuswhybrow.minecraft.law.exceptions.PrisonAlreadyExistsException;
@@ -10,17 +12,26 @@ import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
-public class LawWorld {
+public class LawWorld extends Saveable {
 	private World bukkitWorld;
 	private HashMap<String, Prison> prisons;
 	private HashMap<String, Prison> selectedPrisons;
 	private HashMap<String, PrisonCell> prisoners;
 	
 	public LawWorld(World bukkitWorld) {
+		this(bukkitWorld, true);
+	}
+	
+	public LawWorld(World bukkitWorld, boolean isActive) {
 		this.bukkitWorld = bukkitWorld;
 		prisons = new HashMap<String, Prison>();
 		selectedPrisons = new HashMap<String , Prison>();
 		prisoners = new HashMap<String, PrisonCell>();
+		
+		this.setActive(isActive);
+		
+		setChanged("prisons", false);
+		setChanged("selectedPrisons", false);
 	}
 	
 	public String getName() {
@@ -50,52 +61,43 @@ public class LawWorld {
 		if (prison == null) {
 			prison = new Prison(this, name);
 			this.prisons.put(prison.getName(), prison);
+			setChanged("prisons");
 		}
 		return prison;
 	}
 	
 	public void addPrison(Prison prison) {
 		prisons.put(prison.getName(), prison);
+		setChanged("prisons");
 	}
 	
-	public Prison removePrison(Prison prison) {
-		return prisons.remove(prison.getName());
+	public void removePrison(Prison prison) {
+		prisons.remove(prison.getName());
+		prison.delete();
+		setChanged("prisons");
 	}
 	
-	public Prison setSelectedPrison(String playerName, String name) { 
-		return setSelectedPrison(playerName, name, true);
-	}
-	
-	public Prison setSelectedPrison(String playerName, String name, boolean save) {
-		Plugin plugin = Law.get().getPlugin();
-		FileConfiguration config = plugin.getConfig();
-		
+	public Prison setSelectedPrison(String playerName, String name) {
+		playerName = playerName.toLowerCase();
 		Prison prison = null;
 		
 		if (name == null) {
 			selectedPrisons.remove(playerName);
-			if (save) {
-				// Save the selected prison
-				config.set("worlds." + this.getName() + ".active_prisons." + playerName, null);
-			}
+			setChanged("selectedPrisons");
 		} else {
 			prison = prisons.get(name);
 			if (prison != null) {
 				selectedPrisons.put(playerName, prison);
-				
-				if (save) {
-					// Save the selected prison
-					config.set("worlds." + this.getName() + ".active_prisons." + playerName, prison.getName());
-				}
+				setChanged("selectedPrisons");
 			}
 		}
-		
-		plugin.saveConfig();
 		
 		return prison;
 	}
 	
 	public Prison getSelectedPrison(String playerName) {
+		playerName = playerName.toLowerCase();
+		
 		return selectedPrisons.get(playerName);
 	}
 	
@@ -104,10 +106,8 @@ public class LawWorld {
 	}
 	
 	public boolean imprisonPlayer(String playerName, String prisonName, String cellName) {
-		return this.imprisonPlayer(playerName, prisonName, cellName, true);
-	}
-	
-	public boolean imprisonPlayer(String playerName, String prisonName, String cellName, boolean save) {
+		playerName = playerName.toLowerCase();
+		
 		if (this.prisoners.containsKey(playerName)) {
 			// This player is already imprisoned on this world
 			return false;
@@ -120,17 +120,95 @@ public class LawWorld {
 			return false;
 		}
 		
-		if (prison.imprisonPlayer(playerName, cellName, save)) {
+		if (prison.imprisonPlayer(playerName, cellName)) {
 			// The player has been successfully imprisoned
 			this.prisoners.put(playerName, prison.getPrisonCellForPlayer(playerName));
+			setChanged("prisons");
 			return true;
 		}
 		
-		// The player could not be imprisoned because that cell does not exist
+		// The player could not be imprisoned because the prison in non-operational or the cell does not exist
 		return false;
 	}
 	
+	public boolean freePlayer(String playerName) {
+		playerName = playerName.toLowerCase();
+		
+		PrisonCell cell = prisoners.get(playerName);
+		if (cell != null) {
+			if (cell.getPrison().hasExitPoint()) {
+				prisoners.remove(playerName);
+				setChanged("prisons");
+				// its important to call the Prison's freePlayer method (which calls the PrisonCell's)
+				// so that all containers are notified.
+				cell.getPrison().freePlayer(playerName);
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	public PrisonCell getPrisonCellForPlayer(String playerName) {
+		playerName = playerName.toLowerCase();
+		
+		return prisoners.get(playerName);
+	}
+	
 	public boolean isPlayerImprisoned(String playerName) {
+		playerName = playerName.toLowerCase();
+		
 		return this.prisoners.containsKey(playerName);
+	}
+
+	@Override
+	public void save(boolean forceFullSave) {
+		if (!isActive()) {
+			return;
+		}
+		
+		if (forceFullSave) {
+			// For a full save first clean this node
+			configSet("", null);
+		}
+		
+		if (forceFullSave || isChanged("selectedPrisons")) {
+			// Because selected prisons is a HashMap its quicker to delete all lines
+			// in the configuration and write them in again
+			configSet("active_prisons", null);
+			
+			// Write out all the selected prisons to the configuration
+			Iterator<Entry<String,Prison>> it = selectedPrisons.entrySet().iterator();
+			while (it.hasNext()) {
+				Entry<String,Prison> entry = it.next();
+				String playerName = entry.getKey();
+				String prisonName = entry.getValue().getName();
+				configSet("active_prisons." + playerName, prisonName);
+			}
+		}
+		
+		if (forceFullSave || isChanged("prisons")) {
+			// Tell all child prisons to save also
+			Iterator<Prison> it = prisons.values().iterator();
+			while (it.hasNext()) {
+				it.next().save(forceFullSave);
+			}
+		}
+		
+		super.save(forceFullSave);
+	}
+
+	@Override
+	public String getConfigPrefix() {
+		return "worlds." + this.getName();
+	}
+	
+	@Override
+	public void setActive(boolean isActive) {
+		super.setActive(isActive);
+		
+		Iterator<Prison> it = prisons.values().iterator();
+		while (it.hasNext()) {
+			it.next().setActive(isActive);
+		}
 	}
 }

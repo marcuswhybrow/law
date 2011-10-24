@@ -3,40 +3,56 @@ package net.marcuswhybrow.minecraft.law.prison;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.Plugin;
+import net.marcuswhybrow.minecraft.law.Saveable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 
-public class Prison {
+public class Prison extends Saveable {
+	/** The in-game name of this prison */
 	private String name;
+	/** A reference to all the cells of this prison */
 	private HashMap<String, PrisonCell> cells;
+	/** The LawWorld this prison belongs to */
 	private LawWorld lawWorld;
-	private PrisonCellDefault defaultCell = null;
+	/** The default cell for this prison */
+	private PrisonCell defaultCell = null;
+	/** The location where freed players transport to */
 	private Location exitPoint = null;
+	/** An in-memory only account of imprisoned players and the cells they are in */
 	private HashMap<String, PrisonCell> prisoners;
 	
 	public Prison(LawWorld lawWorld, String name) {
 		this(lawWorld, name, true);
 	}
 	
-	public Prison(LawWorld lawWorld, String name, boolean save) {
+	public Prison(LawWorld lawWorld, String name, boolean isActive) {
 		this.name = name;
 		this.cells = new HashMap<String, PrisonCell>();
 		this.prisoners = new HashMap<String, PrisonCell>();
 		this.lawWorld = lawWorld;
+		this.setActive(isActive);
 		
-		if (save) {
-			// Save the new name
-			Plugin plugin = Law.get().getPlugin();
-			FileConfiguration config = plugin.getConfig();
-			config.set(this.getConfigPrefix() + ".name", this.name);
-			plugin.saveConfig();
+		setChanged("name", isActive);
+		setChanged("defaultCell", false);
+		setChanged("exitPoint", false);
+		setChanged("cells", false);
+	}
+	
+	@Override
+	public void setActive(boolean isActive) {
+		super.setActive(isActive);
+		
+		Iterator<PrisonCell> it = cells.values().iterator();
+		while (it.hasNext()) {
+			it.next().setActive(isActive);
 		}
 	}
 	
@@ -49,70 +65,67 @@ public class Prison {
 		return this.name;
 	}
 	
-	public void setDefaultCell(Location cellLocation) {
-		this.setDefaultCell(cellLocation, true);
-	}
-	
-	public void setDefaultCell(Location cellLocation, boolean save) {
-		this.defaultCell = new PrisonCellDefault(this, cellLocation, save);
-	}
-	
 	public void setExitPoint(Location location) {
-		this.setExitPoint(location, true);
-	}
-	
-	public void setExitPoint(Location location, boolean save) {
 		this.exitPoint = location;
 		
-		// Save the exit point to file
-		Plugin plugin = Law.get().getPlugin();
-		FileConfiguration config = plugin.getConfig();
-		config.set(getConfigPrefix() + ".exit_point.location.x", location.getX());
-		config.set(getConfigPrefix() + ".exit_point.location.y", location.getY());
-		config.set(getConfigPrefix() + ".exit_point.location.z", location.getZ());
-		config.set(getConfigPrefix() + ".exit_point.location.pitch", location.getPitch());
-		config.set(getConfigPrefix() + ".exit_point.location.yaw", location.getYaw());
-		plugin.saveConfig();
+		if (isActive) {
+			this.changeMap.put("exitPoint", true);
+		}
 	}
 	
-	public void addCell(String cellName, Location cellLocation) {
-		this.addCell(cellName, cellLocation);
+	public PrisonCell createCellAsDefault(Location cellLocation) {
+		defaultCell = createCell(PrisonCell.DEFAULT_NAME, cellLocation);
+		return defaultCell;
 	}
 	
-	public void addCell(String cellName, Location cellLocation, boolean save) {
-		cells.put(cellName, new PrisonCell(this, cellName, cellLocation));
+	public PrisonCell createCell(String cellName, Location cellLocation) {
+		PrisonCell cell = new PrisonCell(this, cellName, cellLocation, isActive);
+		cells.put(cellName, cell);
+		setChanged("cells");
+		return cell;
 	}
 	
 	public void removeCell(String cellName) {
 		PrisonCell cell = cells.remove(name);
 		if (cell != null) {
 			cell.delete();
+			setChanged("cells");
 		}
 	}
 	
-	public void delete() {
-		lawWorld.removePrison(this);
+	public boolean imprisonPlayer(String playerName, String cellName) {
+		if (!isOperational()) {
+			return false;
+		}
 		
-		Plugin plugin = Law.get().getPlugin();
-		FileConfiguration config = plugin.getConfig();
-		config.set(this.getConfigPrefix(), null);
-		plugin.saveConfig();
-	}
-	
-	public boolean imprisonPlayer(String playerName, String cell) {
-		return this.imprisonPlayer(playerName, cell, true);
-	}
-	
-	public boolean imprisonPlayer(String playerName, String cellName, boolean save) {
-		PrisonCell cell = (cellName == null) ? defaultCell : this.cells.get(cellName);
+		playerName = playerName.toLowerCase();
+		
+		PrisonCell cell = (cellName == PrisonCell.DEFAULT_NAME) ? defaultCell : this.cells.get(cellName);
 		
 		if (cell == null) {
 			return false;
 		}
 		
-		cell.imprisonPlayer(playerName, save);
+		cell.imprisonPlayer(playerName);
+		setChanged("cells");
 		this.prisoners.put(playerName, cell);
 		return true;
+	}
+	
+	public boolean freePlayer(String playerName) {
+		if (!isOperational()) {
+			return false;
+		}
+		
+		playerName = playerName.toLowerCase();
+		
+		PrisonCell cell = prisoners.remove(playerName);
+		if (cell != null) {
+			cell.freePlayer(playerName);
+			setChanged("cells");
+			return true;
+		}
+		return false;
 	}
 	
 	public boolean hasCell(String cellName) {
@@ -123,11 +136,14 @@ public class Prison {
 		}
 	}
 	
+	@Override
 	public String getConfigPrefix() {
-		return "worlds." + this.lawWorld.getName() + ".prisons." + this.getName();
+		return lawWorld.getConfigPrefix() + ".prisons." + this.getName();
 	}
 	
 	public PrisonCell getPrisonCellForPlayer(String playerName) {
+		playerName = playerName.toLowerCase();
+		
 		return this.prisoners.get(playerName);
 	}
 	
@@ -141,5 +157,43 @@ public class Prison {
 	
 	public boolean hasExitPoint() {
 		return this.exitPoint != null;
+	}
+	
+	public Location getExitPoint() {
+		return this.exitPoint;
+	}
+	
+	@Override
+	public void save(boolean forceFullSave) {
+		if (!isActive()) {
+			// If the model is not active yet it cannot save to file
+			return;
+		}
+		
+		if (forceFullSave) {
+			// For a full save first clean this node
+			configSet("", null);
+		}
+		
+		if (forceFullSave || isChanged("name")) {
+			configSet("name", getName());
+		}
+		if (forceFullSave || isChanged("exitPoint")) {
+			if (exitPoint != null) {
+				configSet("exit_point.location.x", exitPoint.getX());
+				configSet("exit_point.location.y", exitPoint.getY());
+				configSet("exit_point.location.z", exitPoint.getZ());
+				configSet("exit_point.location.pitch", exitPoint.getPitch());
+				configSet("exit_point.location.yaw", exitPoint.getYaw());
+			}
+		}
+		if (forceFullSave || isChanged("cells")) {
+			Iterator<PrisonCell> it = cells.values().iterator();
+			while (it.hasNext()) {
+				it.next().save(forceFullSave);
+			}
+		}
+		
+		super.save(forceFullSave);
 	}
 }

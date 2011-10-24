@@ -8,10 +8,11 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Plugin extends JavaPlugin {
 	private final Logger log = Logger.getLogger("Minecraft");
+	private Law law = null;
 	
 	@Override
 	public void onEnable() {
-		Law law = Law.get();
+		law = Law.get();
 		law.setPlugin(this);
 		
 		getCommand("law").setExecutor(new LawCommand());
@@ -23,6 +24,7 @@ public class Plugin extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
+		law.fullSave();
 		log.info(Law.ON_DISABLE_MESSAGE);
 	}
 }

@@ -1,10 +1,12 @@
 package net.marcuswhybrow.minecraft.law.prison;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.Plugin;
+import net.marcuswhybrow.minecraft.law.Saveable;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -16,46 +18,36 @@ import org.bukkit.entity.Player;
  * @author marcus
  *
  */
-public class PrisonCell {
+public class PrisonCell extends Saveable {
 	protected String name;
 	protected Prison prison;
 	protected HashSet<String> imprisonedPlayers;
 	protected Location location;
 	
+	public static final String DEFAULT_NAME = "default";
+	
 	public PrisonCell(Prison prison, String name, Location location) {
 		this(prison, name, location, true);
 	}
 	
-	public PrisonCell(Prison prison, String name, Location location, boolean save) {
+	public PrisonCell(Prison prison, String name, Location location, boolean isActive) {
 		this.prison = prison;
 		this.name = name;
 		this.imprisonedPlayers = new HashSet<String>();
 		this.location = location;
+		this.setActive(isActive);
 		
-		if (save) {
-			// Save the new cell
-			Plugin plugin = Law.get().getPlugin();
-			FileConfiguration config = plugin.getConfig();
-			config.set(getConfigPrefix() + ".name", this.getName());
-			config.set(getConfigPrefix() + ".location.x", location.getX());
-			config.set(getConfigPrefix() + ".location.y", location.getY());
-			config.set(getConfigPrefix() + ".location.z", location.getZ());
-			config.set(getConfigPrefix() + ".location.pitch", location.getPitch());
-			config.set(getConfigPrefix() + ".location.yaw", location.getYaw());
-			plugin.saveConfig();
-		}
+		this.setChanged("name", isActive);
+		this.setChanged("imprisonedPlayers", false);
+		this.setChanged("location", isActive);
 	}
 	
 	public String getName() {
 		return this.name;
 	}
 	
-	public void delete() {
-		// Remove from configuration file
-		Plugin plugin = Law.get().getPlugin();
-		FileConfiguration config = plugin.getConfig();
-		config.set(getConfigPrefix(), null);
-		plugin.saveConfig();
+	public void setLocation(Location location) {
+		this.location = location;
 	}
 	
 	public Location getLocation() {
@@ -71,44 +63,84 @@ public class PrisonCell {
 	}
 	
 	public void imprisonPlayer(String playerName) {
-		this.imprisonPlayer(playerName);
-	}
-	
-	public void imprisonPlayer(String playerName, boolean save) {
+		if (!getPrison().isOperational()) {
+			return;
+		}
+		
+		playerName = playerName.toLowerCase();
+		
 		this.imprisonedPlayers.add(playerName);
 		
 		Player player = Bukkit.getPlayerExact(playerName);
 		
-		if (player != null) {
+		if (isActive && player != null) {
 			player.teleport(this.location);
 		}
 		
-		if (save) {
-			// Save the new cell
-			Plugin plugin = Law.get().getPlugin();
-			FileConfiguration config = plugin.getConfig();
-			config.set(getConfigPrefix() + ".imprisoned_players", Arrays.asList(this.getImprisonedPlayers()));
-			plugin.saveConfig();
+		this.setChanged("imprisonedPlayers");
+	}
+	
+	public void freePlayer(String playerName) {
+		if (!getPrison().isOperational()) {
+			return;
 		}
-	}
-	
-	public void freePlayer(Player player) {
-		this.freePlayer(player, true);
-	}
-	
-	public void freePlayer(Player player, boolean save) {
-		this.imprisonedPlayers.remove(player.getDisplayName());
 		
-		if (save) {
-			// Save the new cell
-			Plugin plugin = Law.get().getPlugin();
-			FileConfiguration config = plugin.getConfig();
-			config.set(getConfigPrefix() + ".imprisoned_players", this.getImprisonedPlayers());
-			plugin.saveConfig();
+		playerName = playerName.toLowerCase();
+		
+		imprisonedPlayers.remove(playerName);
+		
+		Player player = Bukkit.getPlayerExact(playerName);
+		
+		if (isActive && player != null) {
+			player.teleport(this.getPrison().getExitPoint());
 		}
+		
+		this.setChanged("imprisonedPlayers");
+		
+		Law.get().logMessage("OMG - " + this.isChanged("imprisonedPlayers") + " - " + Arrays.asList(this.getImprisonedPlayers()));
 	}
 	
-	protected String getConfigPrefix() {
+	public boolean hasPlayer(String playerName) {
+		playerName = playerName.toLowerCase();
+		
+		return imprisonedPlayers.contains(playerName);
+	}
+	
+	@Override
+	public String getConfigPrefix() {
 		return this.prison.getConfigPrefix() + ".cells."+ this.getName();
+	}
+	
+	@Override
+	public void save(boolean forceFullSave) {
+		Law.get().logMessage("saving PrisonCell - " + isActive);
+		if (!isActive) {
+			// If the model is not active yet it cannot save to file
+			return;
+		}
+		
+		if (forceFullSave) {
+			// For a full save first clean this node
+			configSet("", null);
+		}
+		
+		if (forceFullSave || isChanged("name")) {
+			configSet("name", this.getName());
+		}
+		if (forceFullSave || isChanged("imprisonedPlayers")) {
+			Law.get().logMessage("saving that shit");
+			configSet("imprisoned_players", Arrays.asList(this.getImprisonedPlayers()));
+		}
+		if (forceFullSave || isChanged("location")) {
+			if (location != null) {
+				configSet("location.x", location.getX());
+				configSet("location.y", location.getY());
+				configSet("location.z", location.getZ());
+				configSet("location.pitch", location.getPitch());
+				configSet("location.yaw", location.getYaw());
+			}
+		}
+		
+		super.save(forceFullSave);
 	}
 }

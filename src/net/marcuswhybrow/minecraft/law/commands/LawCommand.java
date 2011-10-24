@@ -6,10 +6,10 @@ import net.marcuswhybrow.minecraft.law.Plugin;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalNameException;
 import net.marcuswhybrow.minecraft.law.exceptions.PrisonAlreadyExistsException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
+import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -156,7 +156,7 @@ public class LawCommand implements CommandExecutor {
 				prison = lawWorld.getPrison(prisonName);
 				if (prison == null) {
 					// This world does not have a prison by the specified name
-					this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " No default prison selected, or specified in command.");
+					this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " No prison with that name.");
 					return;
 				}
 				
@@ -164,12 +164,12 @@ public class LawCommand implements CommandExecutor {
 				prisonName = prison.getName();
 			} else {
 				// Otherwise look at the currently selected prison for this user
-				prison = lawWorld.getSelectedPrison(playerName);
+				prison = lawWorld.getSelectedPrison(player.getDisplayName());
 				if (prison != null) {
 					// Use its name if one is set
 					prisonName = prison.getName();
 				} else {
-					// Otherwise we don't have a prison to use and so we cannto imprison the player
+					// Otherwise we don't have a prison to use and so we cannot imprison the player
 					this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " No default prison selected, or specified in command.");
 					return;
 				}
@@ -188,8 +188,15 @@ public class LawCommand implements CommandExecutor {
 			}
 			
 			// Since all test have passed, imprison the player
-			lawWorld.imprisonPlayer(playerName, prisonName, null);
-			this.law.sendMessage(sender, "Imprisoned " + ChatColor.AQUA + playerName + ChatColor.WHITE + " in " + ChatColor.AQUA + prisonName + ChatColor.WHITE + " prison.");
+			lawWorld.imprisonPlayer(playerName, prisonName, PrisonCell.DEFAULT_NAME);
+			lawWorld.save();
+			law.logMessage(player.getDisplayName() + " imprisoned \"" + playerName + "\" in \"" + prisonName + "\" prison");
+			
+			if (targetPlayer != null) {
+				this.law.sendMessage(sender, "Imprisoned " + ChatColor.AQUA + playerName + ChatColor.WHITE + " in " + ChatColor.AQUA + prisonName + ChatColor.WHITE + " prison.");
+			} else {
+				this.law.sendMessage(sender, "Imprisoned " + ChatColor.AQUA + playerName + ChatColor.WHITE + " in " + ChatColor.AQUA + prisonName + ChatColor.WHITE + " prison. This player is offline but will be imprisoned when they return.");
+			}
 		} else {
 			this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " imprison <player-name> [prison-name]");
 		}
@@ -207,21 +214,34 @@ public class LawCommand implements CommandExecutor {
 			Player player = (Player) sender;
 			Player targetPlayer = Bukkit.getPlayerExact(playerName);
 			
-			if (targetPlayer == null) {
-				this.law.sendMessage(sender, ChatColor.RED + "Error: " + ChatColor.WHITE + "A player with that name cannot be found.");
-				return;
+			LawWorld lawWorld = law.get().getOrCreateLawWorld(player.getWorld());
+			PrisonCell cell = lawWorld.getPrisonCellForPlayer(playerName);
+			String prisonName = "<unknown>";
+			
+			if (cell != null) {
+				prisonName = cell.getPrison().getName();
 			}
 			
-			LawWorld lawWorld = law.get().getOrCreateLawWorld(player.getWorld());
-			Prison prison = lawWorld.getSelectedPrison(player.getDisplayName());
+			law.logMessage("here1");
 			
-			// Imprison the target player in the default (null) cell.
-			if (prison.hasCell(null)) {
-				prison.imprisonPlayer(targetPlayer.getDisplayName(), null);
-				this.law.sendMessage(sender, "imprisoned " + ChatColor.AQUA + playerName);
+			boolean isFreed = lawWorld.freePlayer(playerName);
+			
+			law.logMessage("here2");
+			
+			lawWorld.save();
+			
+			law.logMessage("here3");
+			
+			if (isFreed) {
+				law.logMessage(player.getDisplayName() + " freed \"" + playerName + "\" from \"" + prisonName + "\" prison");
+				
+				if (targetPlayer != null) {
+					this.law.sendMessage(sender, "Freed " + ChatColor.AQUA + playerName + ChatColor.WHITE + " from " + ChatColor.AQUA + prisonName + ChatColor.WHITE + " prison.");
+				} else {
+					this.law.sendMessage(sender, "Freed " + ChatColor.AQUA + playerName + ChatColor.WHITE + " from " + ChatColor.AQUA + prisonName + ChatColor.WHITE + " prison. This player is offline but will be free when they return.");
+				}
 			} else {
-				this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + "The selected prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " does not have a default cell.");
-				this.law.sendMessage(sender, "Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison setdefaultcell" + ChatColor.WHITE + " to set where new inmates will spawn.");
+				this.law.sendMessage(sender, ChatColor.RED + "Error: " + ChatColor.WHITE + "A player with that name is not imprisoned.");
 			}
 		} else {
 			this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " imprison <player>");
@@ -247,6 +267,8 @@ public class LawCommand implements CommandExecutor {
 					try {
 						Prison prison = lawWorld.createPrison(prisonName);
 						lawWorld.setSelectedPrison(player.getDisplayName(), prison.getName());
+						lawWorld.save();
+						law.logMessage(player.getDisplayName() + " created prison \"" + prison.getName() + "\"");
 						this.law.sendMessage(sender, "Prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been created.");
 					} catch (PrisonAlreadyExistsException e) {
 						this.law.sendMessage(sender, ChatColor.RED + "A prison with that name already exists.");
@@ -264,8 +286,8 @@ public class LawCommand implements CommandExecutor {
 					if (prison == null) {
 						this.law.sendMessage(sender, ChatColor.RED + "A prison with that name does not exist.");
 					} else {
-						prison.delete();
-						
+						lawWorld.removePrison(prison);
+						law.logMessage(player.getDisplayName() + " deleted prison \"" + prison.getName() + "\"");
 						this.law.sendMessage(player, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been deleted.");
 						
 						Prison[] prisons = lawWorld.getPrisons();
@@ -284,8 +306,10 @@ public class LawCommand implements CommandExecutor {
 						} if (prisons.length == 1) {
 							String newPrisonName = prisons[0].getName();
 							lawWorld.setSelectedPrison(player.getDisplayName(), newPrisonName);
+							lawWorld.save();
 							this.law.sendMessage(player, "The only remaining prison " + ChatColor.AQUA + newPrisonName + ChatColor.WHITE + " is now the selected prison.");
 						}
+						lawWorld.save();
 					}
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison remove <prison-name>");
@@ -314,6 +338,7 @@ public class LawCommand implements CommandExecutor {
 						this.law.sendMessage(player, ChatColor.RED + "A prison with that name does not exist.");
 					} else {
 						lawWorld.setSelectedPrison(player.getDisplayName(), prison.getName());
+						lawWorld.save();
 						this.law.sendMessage(player, "The prison " + ChatColor.AQUA + prison.getName() + ChatColor.WHITE + " has been selected. All prison commands now apply to this prison.");
 					}
 				} else {
@@ -330,7 +355,9 @@ public class LawCommand implements CommandExecutor {
 							this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " You must select a prison before using this command. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select <prison-name>" + ChatColor.WHITE + ".");
 						}
 					} else {
-						prison.setDefaultCell(player.getLocation());
+						prison.createCellAsDefault(player.getLocation());
+						prison.save();
+						law.logMessage(player.getDisplayName() + " set the default cell location for prison \"" + prison.getName() + "\"");
 						this.law.sendMessage(sender, "The " + ChatColor.AQUA + "default cell" + ChatColor.WHITE + " has been set.");
 					}
 				} else {
@@ -348,6 +375,8 @@ public class LawCommand implements CommandExecutor {
 						}
 					} else {
 						prison.setExitPoint(player.getLocation());
+						prison.save();
+						law.logMessage(player.getDisplayName() + " set the exit point location for prison \"" + prison.getName() + "\"");
 						this.law.sendMessage(sender, "The " + ChatColor.AQUA + "exit point" + ChatColor.WHITE + " has been set.");
 					}
 				} else {
