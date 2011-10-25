@@ -24,8 +24,14 @@ public abstract class Saveable {
 		this.configSave();
 	}
 	
-	public void setChanged(String name) {
-		this.setChanged(name, true);
+	/**
+	 * Marks a data section as having changed, meaning that section will
+	 * be saved to file when the save method is next called.
+	 * 
+	 * @param sectionName the name of the section to mark as changed.
+	 */
+	public void setChanged(String sectionName) {
+		this.setChanged(sectionName, true);
 	}
 	
 	public void setChanged(String name, boolean state) {

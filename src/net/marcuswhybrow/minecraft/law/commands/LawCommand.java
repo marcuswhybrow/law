@@ -355,7 +355,7 @@ public class LawCommand implements CommandExecutor {
 							this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " You must select a prison before using this command. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select <prison-name>" + ChatColor.WHITE + ".");
 						}
 					} else {
-						prison.createCellAsDefault(player.getLocation());
+						prison.createCell(PrisonCell.DEFAULT_NAME, player.getLocation());
 						prison.save();
 						law.logMessage(player.getDisplayName() + " set the default cell location for prison \"" + prison.getName() + "\"");
 						this.law.sendMessage(sender, "The " + ChatColor.AQUA + "default cell" + ChatColor.WHITE + " has been set.");
@@ -382,6 +382,81 @@ public class LawCommand implements CommandExecutor {
 				} else {
 					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison setexitpoint");
 				}
+			} else if ("createcell".equals(action)) {
+				// Adds a cell to the selected prison
+				
+				if (args.length == 3) {
+					// Get the selected prison
+					Prison selectedPrison = lawWorld.getSelectedPrison(player.getDisplayName());
+					
+					String cellName = args[2];
+					
+					if (selectedPrison != null) {
+						// If there is a selected prison
+						
+						// Check if the prison has a cell by that name
+						boolean cellExisted = selectedPrison.hasCell(cellName);
+						
+						// Create the new cell (which will overwrite if necessary)
+						selectedPrison.createCell(cellName, player.getLocation());
+						selectedPrison.save();
+						
+						if (cellExisted) {
+							law.logMessage(player.getDisplayName() + " updated the cell \"" + cellName + "\" for prison \"" + selectedPrison.getName() + "\"");
+							this.law.sendMessage(sender, "The cell " + ChatColor.AQUA + cellName + ChatColor.WHITE + " has been updated, as a cell with that name already existed in " + ChatColor.AQUA + selectedPrison.getName() + ChatColor.WHITE + " prison.");
+						} else {
+							law.logMessage(player.getDisplayName() + " created the cell \"" + cellName + "\" for prison \"" + selectedPrison.getName() + "\"");
+							this.law.sendMessage(sender, "The cell " + ChatColor.AQUA + cellName + ChatColor.WHITE + " has been created.");
+						}
+					} else {
+						// There is no selected prison
+						int numPrisons = lawWorld.getPrisons().length;
+						if (numPrisons == 0) {
+							this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " You must create a prison before using this command. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison create <prison-name>" + ChatColor.WHITE + ".");
+						} else {
+							this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " You must select a prison before using this command. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select <prison-name>" + ChatColor.WHITE + ".");
+						}
+					}
+				} else {
+					// There is not the correct amount of arguments (i.e. prison createcell cellname)
+					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison createcell <cell-name>");
+				}
+			} else if ("deletecell".equals(action)) {
+				// Removes a cell from the selected prison
+				
+				if (args.length == 3) {
+					// Get the selected prison
+					Prison selectedPrison = lawWorld.getSelectedPrison(player.getDisplayName());
+					
+					String cellName = args[2];
+					
+					if (selectedPrison != null) {
+						// If there is a selected prison
+						
+						// Remove the cell
+						PrisonCell cell = selectedPrison.removeCell(cellName);
+						
+						if (cell != null) {
+							// The cell existed, and was removed
+							law.logMessage(player.getDisplayName() + " deleted the cell \"" + cellName + "\" for prison \"" + selectedPrison.getName() + "\"");
+							this.law.sendMessage(sender, "The cell " + ChatColor.AQUA + cellName + ChatColor.WHITE + " has been deleted from " + ChatColor.AQUA + selectedPrison.getName() + ChatColor.WHITE + " prison.");
+						} else {
+							// The cell did not exist
+							this.law.sendMessage(sender, ChatColor.RED + "Error: " + ChatColor.WHITE + "The cell " + ChatColor.AQUA + cellName + ChatColor.WHITE + " does not exist in " + ChatColor.AQUA + selectedPrison.getName() + ChatColor.WHITE + " prison.");
+						}
+					} else {
+						// There is no selected prison
+						int numPrisons = lawWorld.getPrisons().length;
+						if (numPrisons == 0) {
+							this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " You must create a prison before using this command. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison create <prison-name>" + ChatColor.WHITE + ".");
+						} else {
+							this.law.sendMessage(sender, ChatColor.RED + "Error:" + ChatColor.WHITE + " You must select a prison before using this command. Use " + ChatColor.YELLOW + "/" + PLUGIN_COMMAND_NAME + " prison select <prison-name>" + ChatColor.WHITE + ".");
+						}
+					}
+				} else {
+					// There is not the correct amount of arguments (i.e. prison deletecell cellname)
+					this.law.sendMessage(sender, ChatColor.RED + "usage: /" + PLUGIN_COMMAND_NAME + " prison deletecell <cell-name>");
+				}
 			} else {
 				this.law.sendMessage(sender, "Unknown command. Type \"/law prison\" for the list.");
 			}
@@ -397,8 +472,8 @@ public class LawCommand implements CommandExecutor {
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison select <prison-name>");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison setdefaultcell");
 			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison setexitpoint");
-			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison addcell <cell-name>");
-			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison removecell <cell-name>");
+			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison createcell <cell-name>");
+			sender.sendMessage("/" + PLUGIN_COMMAND_NAME + " prison deletecell <cell-name>");
 		}
 	}
 }

@@ -98,7 +98,7 @@ public class Law {
 						prison = new Prison(lawWorld, prisonName, false);
 						lawWorld.addPrison(prison);
 						
-						prefix += "." + prison.getName();
+						prefix = "worlds." + lawWorld.getName() + ".prisons." + prison.getName();
 						
 						// Retrieve the exit point for this prison
 						exitPointX = config.getDouble(prefix + ".exit_point.location.x");
@@ -115,21 +115,18 @@ public class Law {
 						cells = config.getConfigurationSection(prefix + ".cells");
 						if (cells != null) {
 							for (String cellName : cells.getKeys(false)) {
-								prefix += ".cells." + cellName;
+								prefix = "worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".cells." + cellName;
 								x = config.getDouble(prefix + ".location.x");
 								y = config.getDouble(prefix + ".location.y");
 								z = config.getDouble(prefix + ".location.z");
 								pitch = config.getDouble(prefix + ".location.pitch");
 								yaw = config.getDouble(prefix + ".location.yaw");
-								cellLocation = new Location(world, x, y, z, new Float(pitch), new Float(yaw));
+								cellLocation = new Location(world, x, y, z, new Float(yaw), new Float(pitch));
 								
-								if (PrisonCell.DEFAULT_NAME.equals(cellName)) {
-									prison.createCellAsDefault(cellLocation);
-								} else {
-									prison.createCell(cellName, cellLocation);
-								}
+								logMessage("creating cell - " + cellName + " - " + x + "," + y + "," + z + " " + yaw + ":" + pitch);
+								prison.createCell(cellName, cellLocation);
 								
-								prefix += ".imprisoned_players";
+								prefix = "worlds." + lawWorld.getName() + ".prisons." + prison.getName() + ".cells." + cellName + ".imprisoned_players";
 								
 								@SuppressWarnings("unchecked")
 								List<String> imprisonedPlayersList = config.getList(prefix);

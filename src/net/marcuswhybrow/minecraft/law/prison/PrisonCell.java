@@ -62,9 +62,9 @@ public class PrisonCell extends Saveable {
 		return this.imprisonedPlayers.toArray(new String[this.imprisonedPlayers.size()]);
 	}
 	
-	public void imprisonPlayer(String playerName) {
+	public boolean imprisonPlayer(String playerName) {
 		if (!getPrison().isOperational()) {
-			return;
+			return false;
 		}
 		
 		playerName = playerName.toLowerCase();
@@ -78,26 +78,37 @@ public class PrisonCell extends Saveable {
 		}
 		
 		this.setChanged("imprisonedPlayers");
+		
+		return true;
 	}
 	
-	public void freePlayer(String playerName) {
+	public boolean freePlayer(String playerName) {
 		if (!getPrison().isOperational()) {
-			return;
+			return false;
 		}
-		
+
+		// Standardise on lower case names
 		playerName = playerName.toLowerCase();
 		
-		imprisonedPlayers.remove(playerName);
+		// Free the player
+		boolean wasImprisoned = imprisonedPlayers.remove(playerName);
 		
-		Player player = Bukkit.getPlayerExact(playerName);
-		
-		if (isActive && player != null) {
-			player.teleport(this.getPrison().getExitPoint());
+		if (wasImprisoned) {
+			// If the player was indeed imprisoned here
+			
+			// Teleport the player if they are online right now
+			Player player = Bukkit.getPlayerExact(playerName);
+			if (isActive && player != null) {
+				player.teleport(this.getPrison().getExitPoint());
+			}
+			
+			// Since the player was removed from the imprisonedPlayers set
+			// mark this data section as changed
+			setChanged("imprisonedPlayers");
+			return true;
+		} else {
+			return false;
 		}
-		
-		this.setChanged("imprisonedPlayers");
-		
-		Law.get().logMessage("OMG - " + this.isChanged("imprisonedPlayers") + " - " + Arrays.asList(this.getImprisonedPlayers()));
 	}
 	
 	public boolean hasPlayer(String playerName) {
