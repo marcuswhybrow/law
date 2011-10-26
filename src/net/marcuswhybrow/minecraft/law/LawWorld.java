@@ -3,11 +3,14 @@ package net.marcuswhybrow.minecraft.law;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import net.marcuswhybrow.minecraft.law.prison.Prison;
+import net.marcuswhybrow.minecraft.law.utilities.Config;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -17,11 +20,13 @@ public class LawWorld extends Entity {
 	private HashMap<String, Prison> prisons;
 	private HashMap<String, Prison> selectedPrisons;
 	private int hashCode;
+	private HashMap<String, Location> latentTeleports;
 	
 	public LawWorld(World bukkitWorld) {
 		this.bukkitWorld = bukkitWorld;
 		prisons = new HashMap<String, Prison>();
 		selectedPrisons = new HashMap<String , Prison>();
+		latentTeleports = new HashMap<String, Location>();
 		
 		setName(this.bukkitWorld.getName());
 		setConfigPrefix("worlds." + this.getName());
@@ -121,6 +126,13 @@ public class LawWorld extends Entity {
 				prison.save(forceFullSave);
 			}
 		}
+		
+		if (forceFullSave || isChanged("latentTeleports")) {
+			configSet("latent_teleports", null);
+			for (Entry<String, Location> entry : latentTeleports.entrySet()) {
+				Config.setLocation(getConfigPrefix() + ".latent_teleports." + entry.getKey(), entry.getValue());
+			}
+		}
 	}
 
 	@Override
@@ -153,6 +165,16 @@ public class LawWorld extends Entity {
 				this.setSelectedPrison(playerName, prisonName);
 			}
 		}
+		
+		// Get the offline prisoners
+		ConfigurationSection latentTeleports = config.getConfigurationSection(getConfigPrefix() + ".latent_teleports");
+		if (latentTeleports != null) {
+			Location location;
+			for (String playerName : latentTeleports.getKeys(false)) {
+				location = Config.getLocation(getConfigPrefix() + ".latent_teleports." + playerName);
+				this.addLatentTeleport(playerName, location);
+			}
+		}
 	}
 	
 	public World getBukkitWorld() {
@@ -181,5 +203,37 @@ public class LawWorld extends Entity {
 			return this.getName() == other.getName();
 		}
 		return false;
+	}
+	
+	public Map<String, Location> getLatentTeleports() {
+		return this.latentTeleports;
+	}
+	
+	public void addLatentTeleports(Map<String, Location> offlinePrisoners) {
+		for (Entry<String,Location> entry : offlinePrisoners.entrySet()) {
+			
+			this.addLatentTeleport(entry.getKey(), entry.getValue());
+		}
+	}
+	
+	public void addLatentTeleport(String playerName, Location location) {
+		this.latentTeleports.put(playerName.toLowerCase(), location);
+		setChanged("latentTeleports");
+	}
+	
+	public Location getLatentTeleport(String playerName) {
+		return this.latentTeleports.get(playerName);
+	}
+	
+	public Location removeLatentTeleport(String playerName) {
+		Location location = this.latentTeleports.remove(playerName.toLowerCase());
+		if (location != null) {
+			setChanged("latentTeleports");
+		}
+		return location;
+	}
+	
+	public boolean hasLatentTeleport(String playerName) {
+		return this.latentTeleports.containsKey(playerName.toLowerCase());
 	}
 }

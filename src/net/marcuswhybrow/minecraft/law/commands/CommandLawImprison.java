@@ -23,7 +23,7 @@ public class CommandLawImprison extends Command {
 	private static final int CREATE_PRISON_FIRST = 1;
 	private static final int SELECT_PRISON_FIRST = 2;
 	private static final int WORLD_DOES_NOT_HAVE_PRISON_WITH_THAT_NAME = 3;
-	private static final int PLAYER_IS_ALREADY_IMPRISONED_IN_THIS_WORLD = 4;
+	private static final int PLAYER_IS_ALREADY_IMPRISONED_IN_THAT_CELL = 4;
 	private static final int PRISON_IS_NOT_OPERATIONAL = 5;
 	private static final int PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME = 6;
 	
@@ -52,10 +52,7 @@ public class CommandLawImprison extends Command {
 		targetCellName = args.length >= 5 ? args[4] : PrisonCell.DEFAULT_NAME;
 		player = (Player) sender;
 		lawWorld = (LawWorld) Law.get().getLawWorldForPlayer(player);
-		
-		if (lawWorld.hasPrisoner(player.getName())) {
-			return PLAYER_IS_ALREADY_IMPRISONED_IN_THIS_WORLD;
-		}
+
 		
 		targetPrison = targetPrisonName == null ? lawWorld.getSelectedPrison(player.getName()) : lawWorld.getPrison(targetPrisonName);
 		
@@ -81,6 +78,10 @@ public class CommandLawImprison extends Command {
 		
 		if (targetCell == null) {
 			return PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME;
+		}
+		
+		if (targetCell.hasPrisoner(targetPlayerName)) {
+			return PLAYER_IS_ALREADY_IMPRISONED_IN_THAT_CELL;
 		}
 		
 		Law.get().imprisonPlayer(targetPlayerName, targetCell);
@@ -127,8 +128,8 @@ public class CommandLawImprison extends Command {
 		case WORLD_DOES_NOT_HAVE_PRISON_WITH_THAT_NAME:
 			MessageDispatcher.sendMessage(player, Colorise.error("This world does not have a prison with that name."));
 			break;
-		case PLAYER_IS_ALREADY_IMPRISONED_IN_THIS_WORLD:
-			MessageDispatcher.sendMessage(player, Colorise.error("The player ") + Colorise.entity(targetPlayerName) + Colorise.error(" is already imprisoned in this world."));
+		case PLAYER_IS_ALREADY_IMPRISONED_IN_THAT_CELL:
+			MessageDispatcher.sendMessage(player, "The player " + Colorise.entity(targetPlayerName) + " is already imprisoned within that cell.");
 			break;
 		case PRISON_IS_NOT_OPERATIONAL:
 			// Deliver appropriate messages to help the user make the prison operational.

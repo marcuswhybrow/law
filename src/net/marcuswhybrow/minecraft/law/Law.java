@@ -6,7 +6,6 @@ import java.util.Iterator;
 
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
-import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -97,18 +96,19 @@ public class Law {
 			throw new IllegalArgumentException("Prisoner container cannot be null");
 		}
 		
-		MessageDispatcher.consoleInfo("imprisoning player: " + playerName);
-		
 		if (prisonerContainer.imprisonPlayer(playerName) == false) {
 			return false;
 		}
 		
-		MessageDispatcher.consoleInfo("  imprisoning complete");
-		
 		PrisonCell cell = prisonerContainer.getPrisonerCell(playerName);
 		Player player = Bukkit.getPlayerExact(playerName);
 		if (player != null) {
+			// Teleport the player right now to the location
 			player.teleport(cell.getLocation());
+		} else {
+			LawWorld lawWorld = cell.getPrison().getLawWorld();
+			lawWorld.addLatentTeleport(playerName, cell.getLocation());
+			lawWorld.save();
 		}
 		
 		return true;
@@ -123,12 +123,28 @@ public class Law {
 		prisonerContainer.freePlayer(playerName);
 		
 		Player player = Bukkit.getPlayerExact(playerName);
+		Location location = cell.getPrison().getExitPoint();
+		
+		if (location == null) {
+			location = cell.getPrison().getLawWorld().getBukkitWorld().getSpawnLocation();
+		}
+		
 		if (player != null) {
-			Location location = cell.getPrison().getExitPoint();
-			if (location == null) {
-				location = player.getWorld().getSpawnLocation();
-			}
 			player.teleport(location);
+		} else {
+			LawWorld lawWorld = cell.getPrison().getLawWorld();
+			
+			// Since there are only two states (free and imprisoned) and previous tests
+			// returned if the player is already free, if a location exists it is
+			// because the player was to be imprisoned.
+			// If this is the case we can just remove the teleport directive so that
+			// the player in question is none the wiser when they next login.
+			Location storedLocation = lawWorld.removeLatentTeleport(playerName);
+			if (storedLocation == null) {
+				// Otherwise write the teleport instruction as the player is imprisoned
+				lawWorld.addLatentTeleport(playerName, location);
+			}
+			lawWorld.save();
 		}
 	}
 	
