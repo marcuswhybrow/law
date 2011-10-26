@@ -1,93 +1,93 @@
 package net.marcuswhybrow.minecraft.law;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 
-import net.marcuswhybrow.minecraft.law.exceptions.IllegalNameException;
-import net.marcuswhybrow.minecraft.law.exceptions.PrisonAlreadyExistsException;
+import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
+import net.marcuswhybrow.minecraft.law.interfaces.Referenceable;
+import net.marcuswhybrow.minecraft.law.interfaces.Saveable;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
+import net.marcuswhybrow.minecraft.law.utilities.Validate;
 
 import org.bukkit.World;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
 
-public class LawWorld extends Saveable {
+public class LawWorld extends Entity {
 	private World bukkitWorld;
 	private HashMap<String, Prison> prisons;
 	private HashMap<String, Prison> selectedPrisons;
-	private HashMap<String, PrisonCell> prisoners;
+	private int hashCode;
 	
 	public LawWorld(World bukkitWorld) {
-		this(bukkitWorld, true);
-	}
-	
-	public LawWorld(World bukkitWorld, boolean isActive) {
 		this.bukkitWorld = bukkitWorld;
 		prisons = new HashMap<String, Prison>();
 		selectedPrisons = new HashMap<String , Prison>();
-		prisoners = new HashMap<String, PrisonCell>();
 		
-		this.setActive(isActive);
-		
-		setChanged("prisons", false);
-		setChanged("selectedPrisons", false);
+		setName(this.bukkitWorld.getName());
+		setConfigPrefix("worlds." + this.getName());
 	}
 	
-	public String getName() {
-		return this.bukkitWorld.getName();
-	}
-	
-	public Prison createPrison(String name) throws PrisonAlreadyExistsException, IllegalNameException {
-		if (prisons.containsKey(name)) {
-			throw new PrisonAlreadyExistsException();
-		} else {
-			if (name.matches("[a-zA-Z0-9_-]+")) {
-				Prison prison = new Prison(this, name);
-				this.addPrison(prison);
-				return prison;
-			} else {
-				throw new IllegalNameException();
-			}
-		}
+	public boolean hasPrison(String prisonName) {
+		return prisons.containsKey(prisonName);
 	}
 	
 	public Prison getPrison(String name) {
-		return prisons.get(name);
-	}
-	
-	public Prison getOrCreatePrison(String name) {
-		Prison prison = prisons.get(name);
-		if (prison == null) {
-			prison = new Prison(this, name);
-			this.prisons.put(prison.getName(), prison);
-			setChanged("prisons");
-		}
-		return prison;
+		return prisons.get(name.toLowerCase());
 	}
 	
 	public void addPrison(Prison prison) {
-		prisons.put(prison.getName(), prison);
+		prisons.put(prison.getName().toLowerCase(), prison);
 		setChanged("prisons");
 	}
 	
-	public void removePrison(Prison prison) {
-		prisons.remove(prison.getName());
+	public void deletePrison(Prison prison) {
+		prisons.remove(prison.getName().toLowerCase());
 		prison.delete();
 		setChanged("prisons");
+		
+		// If there is only one prison remaining
+		if (prisons.size() == 1) {
+			// Get that prison
+			Prison lastPrison = prisons.values().iterator().next();
+			// And set it as everyones selected prison
+			MessageDispatcher.consoleInfo("selectedPrison: ");
+			for (String playerName : selectedPrisons.keySet()) {
+				MessageDispatcher.consoleInfo("  " + playerName);
+				selectedPrisons.put(playerName, lastPrison);
+			}
+			
+			setChanged("selectedPrisons");
+		}
+		
+		// Remove the the prison from any selectedPrison entries
+		Iterator<Prison> it = selectedPrisons.values().iterator();
+		while (it.hasNext()) {
+			if (it.next() == prison) {
+				it.remove();
+			}
+		}
+		setChanged("selectedPrisons");
 	}
 	
-	public Prison setSelectedPrison(String playerName, String name) {
+	public Prison setSelectedPrison(String playerName, String prisonName) {
 		playerName = playerName.toLowerCase();
 		Prison prison = null;
 		
-		if (name == null) {
-			selectedPrisons.remove(playerName);
+		if (prisonName == null) {
+			selectedPrisons.remove(playerName.toLowerCase());
 			setChanged("selectedPrisons");
 		} else {
-			prison = prisons.get(name);
+			prison = prisons.get(prisonName.toLowerCase());
 			if (prison != null) {
-				selectedPrisons.put(playerName, prison);
+				selectedPrisons.put(playerName.toLowerCase(), prison);
 				setChanged("selectedPrisons");
 			}
 		}
@@ -96,76 +96,15 @@ public class LawWorld extends Saveable {
 	}
 	
 	public Prison getSelectedPrison(String playerName) {
-		playerName = playerName.toLowerCase();
-		
-		return selectedPrisons.get(playerName);
+		return selectedPrisons.get(playerName.toLowerCase());
 	}
 	
-	public Prison[] getPrisons() {
-		return prisons.values().toArray(new Prison[prisons.size()]);
-	}
-	
-	public boolean imprisonPlayer(String playerName, String prisonName, String cellName) {
-		playerName = playerName.toLowerCase();
-		
-		if (this.prisoners.containsKey(playerName)) {
-			// This player is already imprisoned on this world
-			return false;
-		}
-		
-		Prison prison = this.getPrison(prisonName);
-		
-		if (prison == null) {
-			// A prison with that name does not exist
-			return false;
-		}
-		
-		if (prison.imprisonPlayer(playerName, cellName)) {
-			// The player has been successfully imprisoned
-			this.prisoners.put(playerName, prison.getPrisonCellForPlayer(playerName));
-			setChanged("prisons");
-			return true;
-		}
-		
-		// The player could not be imprisoned because the prison in non-operational or the cell does not exist
-		return false;
-	}
-	
-	public boolean freePlayer(String playerName) {
-		playerName = playerName.toLowerCase();
-		
-		PrisonCell cell = prisoners.get(playerName);
-		if (cell != null) {
-			if (cell.getPrison().hasExitPoint()) {
-				prisoners.remove(playerName);
-				setChanged("prisons");
-				// its important to call the Prison's freePlayer method (which calls the PrisonCell's)
-				// so that all containers are notified.
-				cell.getPrison().freePlayer(playerName);
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	public PrisonCell getPrisonCellForPlayer(String playerName) {
-		playerName = playerName.toLowerCase();
-		
-		return prisoners.get(playerName);
-	}
-	
-	public boolean isPlayerImprisoned(String playerName) {
-		playerName = playerName.toLowerCase();
-		
-		return this.prisoners.containsKey(playerName);
+	public Collection<Prison> getPrisons() {
+		return prisons.values();
 	}
 
 	@Override
-	public void save(boolean forceFullSave) {
-		if (!isActive()) {
-			return;
-		}
-		
+	public void onSave(boolean forceFullSave) {
 		if (forceFullSave) {
 			// For a full save first clean this node
 			configSet("", null);
@@ -174,41 +113,81 @@ public class LawWorld extends Saveable {
 		if (forceFullSave || isChanged("selectedPrisons")) {
 			// Because selected prisons is a HashMap its quicker to delete all lines
 			// in the configuration and write them in again
-			configSet("active_prisons", null);
+			configSet("selected_prisons", null);
 			
 			// Write out all the selected prisons to the configuration
-			Iterator<Entry<String,Prison>> it = selectedPrisons.entrySet().iterator();
-			while (it.hasNext()) {
-				Entry<String,Prison> entry = it.next();
-				String playerName = entry.getKey();
-				String prisonName = entry.getValue().getName();
-				configSet("active_prisons." + playerName, prisonName);
+			for (Entry<String, Prison> entry : selectedPrisons.entrySet()) {
+				String playerName = entry.getKey().toLowerCase();
+				String prisonName = entry.getValue().getName().toLowerCase();
+				configSet("selected_prisons." + playerName, prisonName);
 			}
 		}
 		
 		if (forceFullSave || isChanged("prisons")) {
 			// Tell all child prisons to save also
-			Iterator<Prison> it = prisons.values().iterator();
-			while (it.hasNext()) {
-				it.next().save(forceFullSave);
+			for (Prison prison : prisons.values()) {
+				prison.save(forceFullSave);
 			}
 		}
-		
-		super.save(forceFullSave);
 	}
 
 	@Override
-	public String getConfigPrefix() {
-		return "worlds." + this.getName();
+	public void onSetup() {
+		FileConfiguration config = Law.get().getPlugin().getConfig();
+		
+		// Get the prisons
+		ConfigurationSection prisons = config.getConfigurationSection(getConfigPrefix() + ".prisons");
+		if (prisons != null) {
+			for (String prisonName : prisons.getKeys(false)) {
+				prisonName = prisonName.toLowerCase();
+				if (hasPrison(prisonName)) {
+					MessageDispatcher.consoleWarning("Duplicate prison names defined for world \"" + getName() + "\" using first definition.");
+				} else if (Prison.validateName(prisonName) == false) {
+					MessageDispatcher.consoleWarning("Illegal prison name \"" + prisonName + "\" defined for world \"" + getName() + "\".");
+				} else {
+					Prison prison = new Prison(this, prisonName);
+					this.addPrison(prison);
+					prison.setup();
+				}
+			}
+		}
+		
+		// Get the selected prisons
+		ConfigurationSection activePrisons = config.getConfigurationSection(getConfigPrefix() + ".selected_prisons");
+		if (activePrisons != null) {
+			String prisonName;
+			for (String playerName : activePrisons.getKeys(false)) {
+				prisonName = config.getString(getConfigPrefix() + ".selected_prisons." + playerName);
+				this.setSelectedPrison(playerName, prisonName);
+			}
+		}
+	}
+	
+	public World getBukkitWorld() {
+		return this.bukkitWorld;
+	}
+
+	@Override
+	public boolean imprisonPlayer(String playerName) {
+		// A world cannot imprison a player automatically
+		return false;
 	}
 	
 	@Override
-	public void setActive(boolean isActive) {
-		super.setActive(isActive);
-		
-		Iterator<Prison> it = prisons.values().iterator();
-		while (it.hasNext()) {
-			it.next().setActive(isActive);
+	public int hashCode() {
+		if (hashCode == 0) {
+			hashCode = ("WORLD" + this.getName()).hashCode();
 		}
+		
+		return hashCode;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof LawWorld) {
+			LawWorld other = (LawWorld) obj;
+			return this.getName() == other.getName();
+		}
+		return false;
 	}
 }

@@ -1,12 +1,17 @@
 package net.marcuswhybrow.minecraft.law.prison;
 
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import net.marcuswhybrow.minecraft.law.Entity;
 import net.marcuswhybrow.minecraft.law.Law;
-import net.marcuswhybrow.minecraft.law.Plugin;
-import net.marcuswhybrow.minecraft.law.Saveable;
+import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
+import net.marcuswhybrow.minecraft.law.interfaces.Saveable;
+import net.marcuswhybrow.minecraft.law.utilities.Config;
+import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -18,36 +23,30 @@ import org.bukkit.entity.Player;
  * @author marcus
  *
  */
-public class PrisonCell extends Saveable {
-	protected String name;
+public class PrisonCell extends Entity {
 	protected Prison prison;
-	protected HashSet<String> imprisonedPlayers;
 	protected Location location;
 	
 	public static final String DEFAULT_NAME = "default";
 	
+	private int hashCode;
+	
+	public PrisonCell(Prison prison, String name) {
+		this(prison, name, null);
+	}
+	
 	public PrisonCell(Prison prison, String name, Location location) {
-		this(prison, name, location, true);
-	}
-	
-	public PrisonCell(Prison prison, String name, Location location, boolean isActive) {
 		this.prison = prison;
-		this.name = name;
-		this.imprisonedPlayers = new HashSet<String>();
-		this.location = location;
-		this.setActive(isActive);
+		this.setLocation(location);
 		
-		this.setChanged("name", isActive);
-		this.setChanged("imprisonedPlayers", false);
-		this.setChanged("location", isActive);
-	}
-	
-	public String getName() {
-		return this.name;
+		setName(name);
+		setParentPrisonerContainer(this.prison);
+		setConfigPrefix(this.prison.getConfigPrefix() + ".cells."+ this.getName());
 	}
 	
 	public void setLocation(Location location) {
 		this.location = location;
+		setChanged("location");
 	}
 	
 	public Location getLocation() {
@@ -58,78 +57,20 @@ public class PrisonCell extends Saveable {
 		return this.prison;
 	}
 	
-	public String[] getImprisonedPlayers() {
-		return this.imprisonedPlayers.toArray(new String[this.imprisonedPlayers.size()]);
-	}
-	
+	@Override
 	public boolean imprisonPlayer(String playerName) {
-		if (!getPrison().isOperational()) {
+		if (Law.get().isActive() && !getPrison().isOperational()) {
 			return false;
 		}
 		
-		playerName = playerName.toLowerCase();
-		
-		this.imprisonedPlayers.add(playerName);
-		
-		Player player = Bukkit.getPlayerExact(playerName);
-		
-		if (isActive && player != null) {
-			player.teleport(this.location);
-		}
-		
-		this.setChanged("imprisonedPlayers");
+		this.addPrisoner(playerName.toLowerCase(), this);
 		
 		return true;
 	}
 	
-	public boolean freePlayer(String playerName) {
-		if (!getPrison().isOperational()) {
-			return false;
-		}
-
-		// Standardise on lower case names
-		playerName = playerName.toLowerCase();
-		
-		// Free the player
-		boolean wasImprisoned = imprisonedPlayers.remove(playerName);
-		
-		if (wasImprisoned) {
-			// If the player was indeed imprisoned here
-			
-			// Teleport the player if they are online right now
-			Player player = Bukkit.getPlayerExact(playerName);
-			if (isActive && player != null) {
-				player.teleport(this.getPrison().getExitPoint());
-			}
-			
-			// Since the player was removed from the imprisonedPlayers set
-			// mark this data section as changed
-			setChanged("imprisonedPlayers");
-			return true;
-		} else {
-			return false;
-		}
-	}
-	
-	public boolean hasPlayer(String playerName) {
-		playerName = playerName.toLowerCase();
-		
-		return imprisonedPlayers.contains(playerName);
-	}
-	
 	@Override
-	public String getConfigPrefix() {
-		return this.prison.getConfigPrefix() + ".cells."+ this.getName();
-	}
-	
-	@Override
-	public void save(boolean forceFullSave) {
-		Law.get().logMessage("saving PrisonCell - " + isActive);
-		if (!isActive) {
-			// If the model is not active yet it cannot save to file
-			return;
-		}
-		
+	public void onSave(boolean forceFullSave) {
+		MessageDispatcher.consoleInfo("PrisonCell onSave()");
 		if (forceFullSave) {
 			// For a full save first clean this node
 			configSet("", null);
@@ -138,20 +79,57 @@ public class PrisonCell extends Saveable {
 		if (forceFullSave || isChanged("name")) {
 			configSet("name", this.getName());
 		}
-		if (forceFullSave || isChanged("imprisonedPlayers")) {
-			Law.get().logMessage("saving that shit");
-			configSet("imprisoned_players", Arrays.asList(this.getImprisonedPlayers()));
+		if (forceFullSave || isChanged("prisoners")) {
+			configSet("prisoners", new ArrayList<String>(this.getPrisoners()));
 		}
 		if (forceFullSave || isChanged("location")) {
-			if (location != null) {
-				configSet("location.x", location.getX());
-				configSet("location.y", location.getY());
-				configSet("location.z", location.getZ());
-				configSet("location.pitch", location.getPitch());
-				configSet("location.yaw", location.getYaw());
+			Config.setLocation(getConfigPrefix() + ".location", location);
+		}
+	}
+
+	@Override
+	public void onSetup() {
+		FileConfiguration config = Law.get().getPlugin().getConfig();
+		
+		// Get the cells imprisoned players
+		@SuppressWarnings("unchecked")
+		List<String> prisonerList  = (List<String>) config.getList(getConfigPrefix() + ".prisoners");
+		MessageDispatcher.consoleInfo("setup PrisonCell: " + prisonerList);
+		if (prisonerList != null) {
+			for (String s : prisonerList) {
+				MessageDispatcher.consoleInfo("  prisoner: " + s);
 			}
+			
+			// Imprison the players in this cell right away
+			this.imprisonPlayers(new HashSet<String>(prisonerList));
 		}
 		
-		super.save(forceFullSave);
+		// Get the cell location
+		setLocation(Config.getLocation(getConfigPrefix() + ".location"));
+	}
+	
+	@Override
+	public void setChanged(String section, boolean state) {
+		super.setChanged(section, state);
+		this.getPrison().setChanged("cells");
+	}
+	
+	@Override
+	public int hashCode() {
+		// TODO Auto-generated method stub
+		if (hashCode == 0) {
+			hashCode = ("PRISONCELL" + this.getPrison().getName() + this.getName()).hashCode();
+		}
+		
+		return hashCode;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof PrisonCell) {
+			PrisonCell other = (PrisonCell) obj;
+			return this.getName() == other.getName() && this.getPrison() == other.getPrison();
+		}
+		return false;
 	}
 }
