@@ -1,22 +1,16 @@
 package net.marcuswhybrow.minecraft.law.prison;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import net.marcuswhybrow.minecraft.law.Entity;
 import net.marcuswhybrow.minecraft.law.Law;
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
-import net.marcuswhybrow.minecraft.law.interfaces.Saveable;
 import net.marcuswhybrow.minecraft.law.utilities.Config;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 
 /**
  * 
@@ -116,7 +110,6 @@ public class PrisonCell extends Entity {
 	
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
 		if (hashCode == 0) {
 			hashCode = ("PRISONCELL" + this.getPrison().getName() + this.getName()).hashCode();
 		}

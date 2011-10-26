@@ -2,23 +2,15 @@ package net.marcuswhybrow.minecraft.law;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Set;
 
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
-import net.marcuswhybrow.minecraft.law.interfaces.Referenceable;
-import net.marcuswhybrow.minecraft.law.interfaces.Saveable;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
-import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
-import net.marcuswhybrow.minecraft.law.utilities.Validate;
 
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 
 public class LawWorld extends Entity {
 	private World bukkitWorld;

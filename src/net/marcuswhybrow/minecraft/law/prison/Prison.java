@@ -2,16 +2,11 @@ package net.marcuswhybrow.minecraft.law.prison;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 
 import net.marcuswhybrow.minecraft.law.Entity;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
-import net.marcuswhybrow.minecraft.law.interfaces.Saveable;
 import net.marcuswhybrow.minecraft.law.utilities.Config;
-import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 import net.marcuswhybrow.minecraft.law.utilities.Validate;
 
 import org.bukkit.Location;
@@ -204,7 +199,6 @@ public class Prison extends Entity {
 	
 	@Override
 	public int hashCode() {
-		// TODO Auto-generated method stub
 		if (hashCode == 0) {
 			hashCode = ("PRISON" + this.getLawWorld().getName() + this.getName()).hashCode();
 		}
