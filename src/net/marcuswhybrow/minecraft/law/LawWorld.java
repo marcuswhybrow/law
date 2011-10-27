@@ -236,4 +236,10 @@ public class LawWorld extends Entity {
 	public boolean hasLatentTeleport(String playerName) {
 		return this.latentTeleports.containsKey(playerName.toLowerCase());
 	}
+	
+	@Override
+	public boolean canDelete() {
+		// You can never delete a world
+		return false;
+	}
 }

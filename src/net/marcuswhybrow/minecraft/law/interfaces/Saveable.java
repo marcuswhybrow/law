@@ -16,4 +16,6 @@ public interface Saveable {
 	
 	public void configSet(String relativePath, Object o);
 	public void configSave();
+	
+	public boolean canDelete();
 }

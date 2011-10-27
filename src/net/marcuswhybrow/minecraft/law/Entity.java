@@ -202,8 +202,10 @@ public abstract class Entity implements Referenceable, PrisonerContainer, Saveab
 	@Override
 	public void delete() {
 		// Remove from configuration file
-		this.configSet("", null);
-		this.configSave();
+		if (canDelete()) {
+			this.configSet("", null);
+			this.configSave();
+		}
 	}
 	
 	@Override
@@ -215,5 +217,9 @@ public abstract class Entity implements Referenceable, PrisonerContainer, Saveab
 	public void configSave() {
 		Law.get().getPlugin().saveConfig();
 	}
-
+	
+	@Override
+	public boolean canDelete() {
+		return this.getPrisoners().size() == 0;
+	}
 }

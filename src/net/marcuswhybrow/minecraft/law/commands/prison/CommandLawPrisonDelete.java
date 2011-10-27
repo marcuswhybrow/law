@@ -18,6 +18,7 @@ public class CommandLawPrisonDelete extends Command {
 	
 	public static final int SUCCESS = 0;
 	public static final int PRISON_DOES_NOT_EXIST = 1;
+	public static final int PRISON_HAS_PRISONERS = 2;
 	
 	private Player player;
 	private Prison prison;
@@ -42,6 +43,10 @@ public class CommandLawPrisonDelete extends Command {
 		
 		if (prison == null) {
 			return PRISON_DOES_NOT_EXIST;
+		}
+		
+		if (prison.canDelete() == false) {
+			return PRISON_HAS_PRISONERS;
 		}
 		
 		// Delete but don't save yet
@@ -87,6 +92,9 @@ public class CommandLawPrisonDelete extends Command {
 		switch (reason) {
 		case PRISON_DOES_NOT_EXIST:
 			MessageDispatcher.sendMessage(player, Colorise.error("A prison with that name does not exist."));
+			break;
+		case PRISON_HAS_PRISONERS:
+			MessageDispatcher.sendMessage(player, Colorise.error(Colorise.error("Prison ") + Colorise.entity(prison.getName()) + Colorise.error(" has prisoners, you must free them before deleting it.")));
 			break;
 		}
 		

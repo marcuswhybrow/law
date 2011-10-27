@@ -20,6 +20,7 @@ public class CommandLawPrisonCellDelete extends Command {
 	private static final int CREATE_PRISON_FIRST = 1;
 	private static final int SELECT_PRISON_FIRST = 2;
 	private static final int PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME = 3;
+	private static final int PRISON_CELL_HAS_PRISONERS = 4;
 	
 	private Player player;
 	private LawWorld lawWorld;
@@ -52,12 +53,18 @@ public class CommandLawPrisonCellDelete extends Command {
 			}
 		}
 			
-		existingCell = selectedPrison.removeCell(cellName);
-		selectedPrison.save();
+		existingCell = selectedPrison.getCell(cellName);
 		
 		if (existingCell == null) {
 			return PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME;
 		}
+		
+		if (existingCell.canDelete() == false) {
+			return PRISON_CELL_HAS_PRISONERS;
+		}
+		
+		selectedPrison.removeCell(cellName);
+		selectedPrison.save();
 		
 		return SUCCESS;
 	}
@@ -79,6 +86,9 @@ public class CommandLawPrisonCellDelete extends Command {
 			break;
 		case PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME:
 			MessageDispatcher.sendMessage(player, Colorise.error("The cell ") + Colorise.highlight(cellName) + Colorise.error(" does not exist in ") + Colorise.entity(selectedPrison.getName()) + Colorise.error(" prison."));
+			break;
+		case PRISON_CELL_HAS_PRISONERS:
+			MessageDispatcher.sendMessage(player, Colorise.error(Colorise.error("Prison cell ") + Colorise.entity(existingCell.getName()) + Colorise.error(" has prisoners, you must free them before deleting it.")));
 			break;
 		}
 	}
