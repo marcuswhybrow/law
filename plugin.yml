@@ -35,6 +35,7 @@ permissions:
             law.commands.prison.delete: true
             law.commands.prison.list: true
             law.commands.prison.select: true
+            law.commands.prison.setexit: true
             law.commands.prison.cell.*: true
             
     law.commands.prison:
@@ -47,6 +48,8 @@ permissions:
         description: Lists the existing prisons
     law.commands.prison.select:
         description: Selects a prison to be the focus of the prison modifying commands
+    law.commands.prison.setexit:
+        description: Sets the location freed players appear for the selected prison
         
     law.commands.prison.cell.*:
         description: Gives access to all of the prison cell commands
