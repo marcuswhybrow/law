@@ -15,12 +15,14 @@ import org.bukkit.entity.Player;
 
 public class CommandLawPrisonList extends Command {
 	public static final String DEFINITION = "law prison list";
+	public static final String PERMISSION_NODE = "prison.list";
 	
 	private static final int SUCCESS = 0;
 	
 	public CommandLawPrisonList() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 	}
 
 	@Override

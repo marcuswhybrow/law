@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLawPrisonSetExit extends Command {
 	public static final String DEFINITION = "law prison setexit";
+	public static final String PERMISSION_NODE = "prison.setexit";
 	
 	private static final int SUCCESS = 0;
 	private static final int CREATE_PRISON_FIRST = 1;
@@ -26,6 +27,7 @@ public class CommandLawPrisonSetExit extends Command {
 	public CommandLawPrisonSetExit() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 		
 		player = null;
 		lawWorld = null;

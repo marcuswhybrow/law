@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLawPrisonDelete extends Command {
 	public static final String DEFINITION = "law prison delete <prison-name>";
+	public static final String PERMISSION_NODE = "prison.delete";
 	
 	public static final int SUCCESS = 0;
 	public static final int PRISON_DOES_NOT_EXIST = 1;
@@ -28,6 +29,7 @@ public class CommandLawPrisonDelete extends Command {
 	public CommandLawPrisonDelete() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 		
 		player = null;
 		prison = null;

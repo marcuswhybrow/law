@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLawPrisonCellMove extends Command {
 	public static final String DEFINITION = "law prison cell move <cell-name>";
+	public static final String PERMISSION_NODE = "prison.cell.move";
 	
 	private static final int SUCCESS = 0;
 	private static final int CREATE_PRISON_FIRST = 1;
@@ -30,6 +31,7 @@ public class CommandLawPrisonCellMove extends Command {
 	public CommandLawPrisonCellMove() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 		
 		player = null;
 		lawWorld = null;

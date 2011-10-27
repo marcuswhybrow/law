@@ -5,3 +5,65 @@ commands:
     law:
         description: The law command list
         usage: /law
+permissions:
+    law.commands.*:
+        description: Gives access to all the commands
+        default: op
+        children:
+            law.commands.imprisonment.*: true
+            law.commands.prison.*: true
+    
+    law.commands.law:
+        description: Lists all the commands available for the law plugin available to the player in question
+            
+    law.commands.imprisonment.*:
+        description: Gives access to the imprison and free commands
+        children:
+            law.commands.imprisonment.imprison: true
+            law.commands.imprisonment.free: true
+            
+    law.commands.imprisonment.imprison:
+        description: Imprisons a player
+    law.commands.imprisonment.free:
+        description: Frees a player
+    
+    law.commands.prison.*:
+        description: Gives access to the prison management commands
+        children:
+            law.commands.prison: true
+            law.commands.prison.create: true
+            law.commands.prison.delete: true
+            law.commands.prison.list: true
+            law.commands.prison.select: true
+            law.commands.prison.cell.*: true
+            
+    law.commands.prison:
+        description: Lists the prison commands
+    law.commands.prison.create:
+        description: Creates a new prison
+    law.commands.prison.delete:
+        description: Deletes an existing prison
+    law.commands.prison.list:
+        description: Lists the existing prisons
+    law.commands.prison.select:
+        description: Selects a prison to be the focus of the prison modifying commands
+        
+    law.commands.prison.cell.*:
+        description: Gives access to all of the prison cell commands
+        children:
+            law.commands.prison.cell: true
+            law.commands.prison.cell.list: true
+            law.commands.prison.cell.create: true
+            law.commands.prison.cell.move: true
+            law.commands.prison.cell.delete: true
+            
+    law.commands.prison.cell:
+        description: Lists the cell commands
+    law.commands.prison.cell.list:
+        description: Lists the prison cells for the selected prison
+    law.commands.prison.cell.create:
+        description: Creates a new cell in the selected prison
+    law.commands.prison.cell.move:
+        description: Moves an existing cell to another location
+    law.commands.prison.cell.delete:
+        description: Deletes an existing cell

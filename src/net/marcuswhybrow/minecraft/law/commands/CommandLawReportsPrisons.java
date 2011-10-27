@@ -12,11 +12,13 @@ import org.bukkit.entity.Player;
 
 public class CommandLawReportsPrisons extends Command {
 	public static final String DEFINITION = "law reports prisons";
+	public static final String PERMISSION_NODE = "reports.prisons";
 	
 	private static final int SUCCESS = 0;
 	
 	public CommandLawReportsPrisons() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
+		setPermissionNode(PERMISSION_NODE);
 	}
 
 	@Override

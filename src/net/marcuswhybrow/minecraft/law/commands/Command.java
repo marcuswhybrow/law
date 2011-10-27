@@ -18,6 +18,8 @@ import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
 public abstract class Command {
 	public enum Type {IN_GAME_ONLY, CONSOLE_ONLY, NORMAL};
+	public static final String BASE_PERMISSION_NODE = "law.commands";
+	public static final String PERMISSION_NODE = "";
 	
 	private List<Element> elements;
 	private int minArgs;
@@ -27,6 +29,7 @@ public abstract class Command {
 	private StringBuilder name;
 	private StringBuilder signature;
 	private Type type;
+	private String permissionNode;
 	
 	protected Law law;
 	
@@ -40,6 +43,7 @@ public abstract class Command {
 		name = null;
 		signature = null;
 		type = Type.NORMAL;
+		permissionNode = null;
 	}
 	
 	/**
@@ -73,6 +77,11 @@ public abstract class Command {
 	 * @param args The arguments entered in the console after the forward slash
 	 */
 	public void execute(CommandSender sender, String[] args) {
+		
+		if (sender.hasPermission(this.getPermissioNode()) == false) {
+			MessageDispatcher.consoleInfo(sender.getName() + " tried to use the command \"" + this.getName() + "\" but did not have permission.");
+			return;
+		}
 		
 		switch (this.type) {
 		case CONSOLE_ONLY:
@@ -228,8 +237,44 @@ public abstract class Command {
 		return signature.toString();
 	}
 	
+	/**
+	 * Gets the name of this command which is all elements of the command
+	 * except the arguments.
+	 * 
+	 * @return The name as a string
+	 */
 	public String getName() {
 		return name.toString();
+	}
+	
+	/**
+	 * Sets the permission node required for a player to use this command
+	 * 
+	 * @param permissionNode The permission node string
+	 */
+	public void setPermissionNode(String permissionNode) {
+		this.permissionNode = BASE_PERMISSION_NODE + "." + permissionNode;
+	}
+	
+	/**
+	 * Gets the permission node required for a player to use this command
+	 * 
+	 * @return The permission node string
+	 */
+	public String getPermissioNode() {
+		return this.permissionNode;
+	}
+	
+	/**
+	 * Checks to see if a command can be run by the command sender and returns
+	 * true if the sender has permission.
+	 * 
+	 * @param sender The sender of the command
+	 * @param commandPermissionNode The command permission node (Excluding the commands base permission)
+	 * @return True if the sender has permission to execute the command, and flase otherwise
+	 */
+	public static boolean checkHasPermission(CommandSender sender, String permissioNode) {
+		return sender.hasPermission(BASE_PERMISSION_NODE + "." + permissioNode);
 	}
 	
 	/**

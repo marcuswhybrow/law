@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLawFree extends Command {
 	public static final String DEFINITION = "law free <player-name>";
+	public static final String PERMISSION_NODE = "imprisonment.free";
 	
 	private static final int SUCCESS = 0;
 	private static final int PLAYER_IS_NOT_IMPRISONED_IN_THIS_WORLD = 1;
@@ -26,6 +27,7 @@ public class CommandLawFree extends Command {
 	public CommandLawFree() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 		
 		player = null;
 		lawWorld = null;

@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLawImprison extends Command {
 	public static final String DEFINITION = "law imprison <player-name> [prison-name] [cell-name]";
+	public static final String PERMISSION_NODE = "imprisonment.imprison";
 	
 	private static final int SUCCESS = 0;
 	private static final int CREATE_PRISON_FIRST = 1;
@@ -37,6 +38,7 @@ public class CommandLawImprison extends Command {
 	public CommandLawImprison() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 		
 		player = null;
 		lawWorld = null;

@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 
 public class CommandLawPrisonSelect extends Command {
 	public static final String DEFINITION = "law prison select <prison-name>";
+	public static final String PERMISSION_NODE = "prison.select";
 	
 	private static final int SUCCESS = 0;
 	private static final int PRISON_DOES_NOT_EXIST = 1;
@@ -23,6 +24,7 @@ public class CommandLawPrisonSelect extends Command {
 	public CommandLawPrisonSelect() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
 		setType(Type.IN_GAME_ONLY);
+		setPermissionNode(PERMISSION_NODE);
 		
 		player = null;
 		selectedPrison = null;
