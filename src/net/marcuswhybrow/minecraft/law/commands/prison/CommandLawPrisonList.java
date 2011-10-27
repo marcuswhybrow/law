@@ -30,7 +30,7 @@ public class CommandLawPrisonList extends Command {
 		Player player = (Player) sender;
 		
 		LawWorld lawWorld = Law.get().getLawWorldForPlayer(player);
-		Prison selectedPrison = lawWorld.getSelectedPrison(player.getDisplayName());
+		Prison selectedPrison = lawWorld.getSelectedPrison(player.getName());
 		
 		MessageDispatcher.sendMessage(sender,"Prison list for world " + Colorise.entity(lawWorld.getName()) + ": ");
 		

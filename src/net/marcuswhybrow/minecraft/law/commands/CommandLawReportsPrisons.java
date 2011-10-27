@@ -31,7 +31,7 @@ public class CommandLawReportsPrisons extends Command {
 		
 		for (LawWorld lawWorld : Law.get().getWorlds()) {
 			MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + lawWorld.getName() + ":");
-			selectedPrison = player != null ? lawWorld.getSelectedPrison(player.getDisplayName()) : null;
+			selectedPrison = player != null ? lawWorld.getSelectedPrison(player.getName()) : null;
 			for (Prison prison : lawWorld.getPrisons()) {
 				if (prison == selectedPrison) {
 					MessageDispatcher.sendMessageWithoutPrefix(sender, "    " + Colorise.highlight(prison.getName()) + " (selected)");

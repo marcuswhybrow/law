@@ -49,7 +49,7 @@ public class CommandLawPrisonCreate extends Command {
 		createdPrison = new Prison(lawWorld, prisonName);
 		lawWorld.addPrison(createdPrison);
 		
-		lawWorld.setSelectedPrison(player.getDisplayName(), createdPrison.getName());
+		lawWorld.setSelectedPrison(player.getName(), createdPrison.getName());
 		lawWorld.save();
 		
 		return SUCCESS;
