@@ -60,10 +60,12 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 					}
 					
 					Block clickedBlock = event.getClickedBlock();
-					if (Settings.get().isSwitchableId(clickedBlock.getTypeId())) {
-						event.setCancelled(true);
-						MessageDispatcher.sendMessage(player, Colorise.error("You cannot interact as a prisoner"));
-						return;
+					if (clickedBlock != null) {
+						if (Settings.get().isSwitchableId(clickedBlock.getTypeId())) {
+							event.setCancelled(true);
+							MessageDispatcher.sendMessage(player, Colorise.error("You cannot interact as a prisoner"));
+							return;
+						}
 					}
 				}
 			}

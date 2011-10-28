@@ -1,7 +1,5 @@
 package net.marcuswhybrow.minecraft.law;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +22,7 @@ import net.marcuswhybrow.minecraft.law.commands.prison.cell.CommandLawPrisonCell
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
+import net.marcuswhybrow.minecraft.law.utilities.Utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandExecutor;
@@ -75,7 +74,7 @@ public class LawCommandExecutor implements CommandExecutor {
 		} catch (IllegalCommandDefinitionException e) {
 			MessageDispatcher.consoleSevere("In-game commands have failed to be setup correctly, and will not work. This is a problem with the plugin itself and should be reported to the developer.");
 			MessageDispatcher.consoleSevere("Please quote the bukkit version (" + Bukkit.getVersion() + "), the Law plugin version (" + Law.getVersion() + ") and the following \"stack trace\" as this will aid in resolving the problem:");
-			MessageDispatcher.consoleSevere(getStackTraceAsString(e));
+			MessageDispatcher.consoleSevere(Utils.getStackTraceAsString(e));
 		}
 	}
 	
@@ -125,20 +124,6 @@ public class LawCommandExecutor implements CommandExecutor {
 	 */
 	private void add(Command command) {
 		commands.put(command.getName(), command);
-	}
-	
-	/**
-	 * Gets a string version of an exceptions stack trace
-	 * 
-	 * @param e The exception to get the stack trace from
-	 * @return THe string version of the stack trace
-	 */
-	private String getStackTraceAsString(Exception e) {
-		StringWriter sw = new StringWriter();
-		PrintWriter pw = new PrintWriter(sw);
-		e.printStackTrace(pw);
-		
-		return sw.toString();
 	}
 	
 	private String getArgsAsString(String[] args, int limit) {

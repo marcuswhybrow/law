@@ -87,7 +87,7 @@ public final class Inventory {
 	 */
 	public static boolean saveToFile(Player player) {
 		
-		new File(inventoriesPath + separator + player.getWorld().getName()).mkdir();
+		new File(inventoriesPath + separator + player.getWorld().getName()).mkdirs();
 		File file = new File(Inventory.getFileName(player));
 		
 		if (file.exists()) {
@@ -104,7 +104,8 @@ public final class Inventory {
 			oos.close();
 			
 		} catch (Exception e) {
-			MessageDispatcher.consoleInfo("Could not create inventory file " + file.getName());
+			MessageDispatcher.consoleWarning("Could not create inventory file " + file.getName());
+			MessageDispatcher.consoleWarning(Utils.getStackTraceAsString(e));
 			return false;
 		}
 		
@@ -134,6 +135,7 @@ public final class Inventory {
 			ois.close();
 		} catch (Exception e) {
 			MessageDispatcher.consoleInfo("Could not read inventory file " + file.getName());
+			MessageDispatcher.consoleWarning(Utils.getStackTraceAsString(e));
 		}
 		
 		if (stacks == null) {

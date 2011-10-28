@@ -181,7 +181,9 @@ public class LawWorld extends Entity {
 			String action;
 			for (String playerName : latentInvnetoryChanges.getKeys(false)) {
 				action = config.getString(getConfigPrefix() + "latent_updates.inventory_change." + playerName);
-				this.addLatentInventoryChange(playerName, InventoryManager.Action.valueOf(action));
+				if (action != null) {
+					this.addLatentInventoryChange(playerName, InventoryManager.Action.valueOf(action));
+				}
 			}
 		}
 		
