@@ -21,14 +21,14 @@ public class LawWorld extends Entity {
 	private HashMap<String, Prison> selectedPrisons;
 	private int hashCode;
 	private HashMap<String, Location> latentTeleports;
-	private HashMap<String, String> latentPermissions;
+	private HashMap<String, InventoryManager.Action> latentInventoryChanges;
 	
 	public LawWorld(World bukkitWorld) {
 		this.bukkitWorld = bukkitWorld;
 		prisons = new HashMap<String, Prison>();
 		selectedPrisons = new HashMap<String , Prison>();
 		latentTeleports = new HashMap<String, Location>();
-		latentPermissions = new HashMap<String, String>();
+		latentInventoryChanges = new HashMap<String, InventoryManager.Action>();
 		
 		setName(this.bukkitWorld.getName());
 		setConfigPrefix("worlds." + this.getName());
@@ -129,10 +129,10 @@ public class LawWorld extends Entity {
 			}
 		}
 		
-		if (forceFullSave || isChanged("latentPermissions")) {
-			configSet("latent_updates.permissions", null);
-			for (Entry<String, String> entry : latentPermissions.entrySet()) {
-				configSet("latent_updates.permissions." + entry.getKey(), entry.getValue());
+		if (forceFullSave || isChanged("latentInventoryChange")) {
+			configSet("latent_updates.inventory_change", null);
+			for (Entry<String, InventoryManager.Action> entry : latentInventoryChanges.entrySet()) {
+				configSet("latent_updates.inventory_change." + entry.getKey(), entry.getValue().toString());
 			}
 		}
 		
@@ -176,12 +176,12 @@ public class LawWorld extends Entity {
 		}
 		
 		// Get latent permission changes
-		ConfigurationSection latentPermissions = config.getConfigurationSection(getConfigPrefix() + ".latent_updates.permissions");
-		if (latentPermissions != null) {
-			String permissionPath;
-			for (String playerName : latentPermissions.getKeys(false)) {
-				permissionPath = config.getString(getConfigPrefix() + "latent_updates.permissions." + playerName);
-				this.addLatentPermission(playerName, permissionPath);
+		ConfigurationSection latentInvnetoryChanges = config.getConfigurationSection(getConfigPrefix() + ".latent_updates.inventory_change");
+		if (latentInvnetoryChanges != null) {
+			String action;
+			for (String playerName : latentInvnetoryChanges.getKeys(false)) {
+				action = config.getString(getConfigPrefix() + "latent_updates.inventory_change." + playerName);
+				this.addLatentInventoryChange(playerName, InventoryManager.Action.valueOf(action));
 			}
 		}
 		
@@ -257,21 +257,21 @@ public class LawWorld extends Entity {
 	}
 	
 	
-	public void addLatentPermission(String playerName, String permissionPath) {
-		this.latentPermissions.put(playerName, permissionPath);
-		setChanged("latentPermissions");
+	public void addLatentInventoryChange(String playerName, InventoryManager.Action action) {
+		this.latentInventoryChanges.put(playerName.toLowerCase(), action);
+		setChanged("latentInventoryChange");
 	}
 	
-	public String removeLatentPermission(String playerName) {
-		String removedPermission = this.latentPermissions.remove(playerName);
-		if (removedPermission != null) {
-			setChanged("latentPermissions");
+	public InventoryManager.Action removeLatentInventoryChange(String playerName) {
+		InventoryManager.Action removedInventoryChange = this.latentInventoryChanges.remove(playerName);
+		if (removedInventoryChange != null) {
+			setChanged("latentInventoryChange");
 		}
-		return removedPermission;
+		return removedInventoryChange;
 	}
 	
-	public String getLatentPermission(String playerName) {
-		return this.latentPermissions.get(playerName);
+	public InventoryManager.Action getLatentInventoryChange(String playerName) {
+		return this.latentInventoryChanges.get(playerName);
 	}
 	
 	@Override

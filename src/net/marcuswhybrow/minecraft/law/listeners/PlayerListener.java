@@ -1,5 +1,6 @@
 package net.marcuswhybrow.minecraft.law.listeners;
 
+import net.marcuswhybrow.minecraft.law.InventoryManager;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.Settings;
@@ -27,13 +28,16 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 		
 		Location location = lawWorld.removeLatentTeleport(player.getName());
 		
-		if (location == null) {
-			return;
+		if (location != null) {
+			player.teleport(location);
+			lawWorld.save();
 		}
 		
-		player.teleport(location);
-		
-		lawWorld.save();
+		InventoryManager.Action action = lawWorld.removeLatentInventoryChange(player.getName());
+		if (action != null) {
+			InventoryManager.preformAction(player, action);
+			lawWorld.save();
+		}
 	}
 	
 	@Override

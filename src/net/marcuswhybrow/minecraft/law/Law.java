@@ -107,9 +107,11 @@ public class Law {
 		if (player != null) {
 			// Teleport the player right now to the location
 			player.teleport(cell.getLocation());
+			InventoryManager.confiscate(player);
 		} else {
 			LawWorld lawWorld = cell.getPrison().getLawWorld();
 			lawWorld.addLatentTeleport(playerName, cell.getLocation());
+			lawWorld.addLatentInventoryChange(playerName, InventoryManager.Action.CONFISCATE);
 			lawWorld.save();
 		}
 		
@@ -133,6 +135,7 @@ public class Law {
 		
 		if (player != null) {
 			player.teleport(location);
+			InventoryManager.restore(player);
 		} else {
 			LawWorld lawWorld = cell.getPrison().getLawWorld();
 			
@@ -146,6 +149,9 @@ public class Law {
 				// Otherwise write the teleport instruction as the player is imprisoned
 				lawWorld.addLatentTeleport(playerName, location);
 			}
+			
+			lawWorld.addLatentInventoryChange(playerName, InventoryManager.Action.RESTORE);
+			
 			lawWorld.save();
 		}
 	}
