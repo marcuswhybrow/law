@@ -263,7 +263,7 @@ public class LawWorld extends Entity {
 	}
 	
 	public InventoryManager.Action removeLatentInventoryChange(String playerName) {
-		InventoryManager.Action removedInventoryChange = this.latentInventoryChanges.remove(playerName);
+		InventoryManager.Action removedInventoryChange = this.latentInventoryChanges.remove(playerName.toLowerCase());
 		if (removedInventoryChange != null) {
 			setChanged("latentInventoryChange");
 		}
@@ -271,7 +271,7 @@ public class LawWorld extends Entity {
 	}
 	
 	public InventoryManager.Action getLatentInventoryChange(String playerName) {
-		return this.latentInventoryChanges.get(playerName);
+		return this.latentInventoryChanges.get(playerName.toLowerCase());
 	}
 	
 	@Override

@@ -18,7 +18,7 @@ public final class InventoryManager {
 	}
 	
 	public static void confiscate(Player player) {
-		inventories.put(player.getName(), Inventory.getAsArray(player));
+		inventories.put(player.getName().toLowerCase(), Inventory.getAsArray(player));
 		Inventory.saveToFile(player);
 		Inventory.clear(player);
 	}
