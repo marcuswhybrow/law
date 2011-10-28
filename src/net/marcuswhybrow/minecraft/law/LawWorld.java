@@ -21,12 +21,14 @@ public class LawWorld extends Entity {
 	private HashMap<String, Prison> selectedPrisons;
 	private int hashCode;
 	private HashMap<String, Location> latentTeleports;
+	private HashMap<String, String> latentPermissions;
 	
 	public LawWorld(World bukkitWorld) {
 		this.bukkitWorld = bukkitWorld;
 		prisons = new HashMap<String, Prison>();
 		selectedPrisons = new HashMap<String , Prison>();
 		latentTeleports = new HashMap<String, Location>();
+		latentPermissions = new HashMap<String, String>();
 		
 		setName(this.bukkitWorld.getName());
 		setConfigPrefix("worlds." + this.getName());
@@ -127,10 +129,17 @@ public class LawWorld extends Entity {
 			}
 		}
 		
+		if (forceFullSave || isChanged("latentPermissions")) {
+			configSet("latent_updates.permissions", null);
+			for (Entry<String, String> entry : latentPermissions.entrySet()) {
+				configSet("latent_updates.permissions." + entry.getKey(), entry.getValue());
+			}
+		}
+		
 		if (forceFullSave || isChanged("latentTeleports")) {
-			configSet("latent_teleports", null);
+			configSet("latent_updates.teleports", null);
 			for (Entry<String, Location> entry : latentTeleports.entrySet()) {
-				Config.setLocation(getConfigPrefix() + ".latent_teleports." + entry.getKey(), entry.getValue());
+				Config.setLocation(getConfigPrefix() + ".latent_updates.teleports." + entry.getKey(), entry.getValue());
 			}
 		}
 	}
@@ -166,12 +175,22 @@ public class LawWorld extends Entity {
 			}
 		}
 		
-		// Get the offline prisoners
-		ConfigurationSection latentTeleports = config.getConfigurationSection(getConfigPrefix() + ".latent_teleports");
+		// Get latent permission changes
+		ConfigurationSection latentPermissions = config.getConfigurationSection(getConfigPrefix() + ".latent_updates.permissions");
+		if (latentPermissions != null) {
+			String permissionPath;
+			for (String playerName : latentPermissions.getKeys(false)) {
+				permissionPath = config.getString(getConfigPrefix() + "latent_updates.permissions." + playerName);
+				this.addLatentPermission(playerName, permissionPath);
+			}
+		}
+		
+		// Get latent teleports
+		ConfigurationSection latentTeleports = config.getConfigurationSection(getConfigPrefix() + ".latent_updates.teleports");
 		if (latentTeleports != null) {
 			Location location;
 			for (String playerName : latentTeleports.getKeys(false)) {
-				location = Config.getLocation(getConfigPrefix() + ".latent_teleports." + playerName);
+				location = Config.getLocation(getConfigPrefix() + ".latent_updates.teleports." + playerName);
 				this.addLatentTeleport(playerName, location);
 			}
 		}
@@ -235,6 +254,24 @@ public class LawWorld extends Entity {
 	
 	public boolean hasLatentTeleport(String playerName) {
 		return this.latentTeleports.containsKey(playerName.toLowerCase());
+	}
+	
+	
+	public void addLatentPermission(String playerName, String permissionPath) {
+		this.latentPermissions.put(playerName, permissionPath);
+		setChanged("latentPermissions");
+	}
+	
+	public String removeLatentPermission(String playerName) {
+		String removedPermission = this.latentPermissions.remove(playerName);
+		if (removedPermission != null) {
+			setChanged("latentPermissions");
+		}
+		return removedPermission;
+	}
+	
+	public String getLatentPermission(String playerName) {
+		return this.latentPermissions.get(playerName);
 	}
 	
 	@Override

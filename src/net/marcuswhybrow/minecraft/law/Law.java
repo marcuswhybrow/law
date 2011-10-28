@@ -100,6 +100,8 @@ public class Law {
 			return false;
 		}
 		
+		// Give the player the imprisoned permission
+		
 		PrisonCell cell = prisonerContainer.getPrisonerCell(playerName);
 		Player player = Bukkit.getPlayerExact(playerName);
 		if (player != null) {
