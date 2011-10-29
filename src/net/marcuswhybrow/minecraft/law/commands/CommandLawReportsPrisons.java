@@ -27,7 +27,7 @@ public class CommandLawReportsPrisons extends Command {
 		
 		Prison selectedPrison;
 		
-		MessageDispatcher.sendMessage(sender,"Prison Report: ");
+		MessageDispatcher.sendMessage(sender, "Prison Report: ");
 		
 		for (LawWorld lawWorld : Law.get().getWorlds()) {
 			MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + lawWorld.getName() + ":");

@@ -134,7 +134,7 @@ public final class Inventory {
 			stacks = (SavableStack[]) ois.readObject();
 			ois.close();
 		} catch (Exception e) {
-			MessageDispatcher.consoleInfo("Could not read inventory file " + file.getName());
+			MessageDispatcher.consoleWarning("Could not read inventory file " + file.getName());
 			MessageDispatcher.consoleWarning(Utils.getStackTraceAsString(e));
 		}
 		

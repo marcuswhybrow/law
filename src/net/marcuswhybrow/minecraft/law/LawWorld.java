@@ -57,9 +57,7 @@ public class LawWorld extends Entity {
 			// Get that prison
 			Prison lastPrison = prisons.values().iterator().next();
 			// And set it as everyones selected prison
-			MessageDispatcher.consoleInfo("selectedPrison: ");
 			for (String playerName : selectedPrisons.keySet()) {
-				MessageDispatcher.consoleInfo("  " + playerName);
 				selectedPrisons.put(playerName, lastPrison);
 			}
 			

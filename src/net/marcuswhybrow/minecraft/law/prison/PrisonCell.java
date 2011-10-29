@@ -64,7 +64,6 @@ public class PrisonCell extends Entity {
 	
 	@Override
 	public void onSave(boolean forceFullSave) {
-		MessageDispatcher.consoleInfo("PrisonCell onSave()");
 		if (forceFullSave) {
 			// For a full save first clean this node
 			configSet("", null);
@@ -88,12 +87,7 @@ public class PrisonCell extends Entity {
 		// Get the cells imprisoned players
 		@SuppressWarnings("unchecked")
 		List<String> prisonerList  = (List<String>) config.getList(getConfigPrefix() + ".prisoners");
-		MessageDispatcher.consoleInfo("setup PrisonCell: " + prisonerList);
 		if (prisonerList != null) {
-			for (String s : prisonerList) {
-				MessageDispatcher.consoleInfo("  prisoner: " + s);
-			}
-			
 			// Imprison the players in this cell right away
 			this.imprisonPlayers(new HashSet<String>(prisonerList));
 		}

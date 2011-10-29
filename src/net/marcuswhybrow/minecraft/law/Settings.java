@@ -2,8 +2,6 @@ package net.marcuswhybrow.minecraft.law;
 
 import java.util.Set;
 
-import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
-
 import com.google.common.collect.Sets;
 
 public class Settings {
@@ -25,12 +23,10 @@ public class Settings {
 	}
 	
 	public boolean isSwitchableId(int identifier) {
-		MessageDispatcher.consoleInfo("switchable: " + identifier);
 		return switchableIdentifiers.contains(identifier);
 	}
 	
 	public boolean isUsableId(int identifier) {
-		MessageDispatcher.consoleInfo("usable: " + identifier);
 		return usableIdentifiers.contains(identifier);
 	}
 }

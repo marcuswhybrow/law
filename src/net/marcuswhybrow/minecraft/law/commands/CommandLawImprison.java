@@ -89,21 +89,6 @@ public class CommandLawImprison extends Command {
 		Law.get().imprisonPlayer(targetPlayerName, targetCell);
 		Law.get().save();
 		
-		MessageDispatcher.consoleInfo("world: " + lawWorld.getName());
-		for (String s : lawWorld.getPrisoners()) {
-			MessageDispatcher.consoleInfo("world inv: " + s);
-		}
-		
-		MessageDispatcher.consoleInfo("prison: " + targetPrison.getName());
-		for (String s : targetPrison.getPrisoners()) {
-			MessageDispatcher.consoleInfo("prison inv: " + s);
-		}
-		
-		MessageDispatcher.consoleInfo("cell: " + targetCell.getName());
-		for (String s : targetCell.getPrisoners()) {
-			MessageDispatcher.consoleInfo("cell inv: " + s);
-		}
-		
 		return SUCCESS;
 	}
 
