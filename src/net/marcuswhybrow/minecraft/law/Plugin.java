@@ -1,6 +1,7 @@
 package net.marcuswhybrow.minecraft.law;
 
 import net.marcuswhybrow.minecraft.law.listeners.BlockListener;
+import net.marcuswhybrow.minecraft.law.listeners.EntityListener;
 import net.marcuswhybrow.minecraft.law.listeners.ImprisonmentListener;
 import net.marcuswhybrow.minecraft.law.listeners.PlayerListener;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
@@ -24,9 +25,12 @@ public class Plugin extends JavaPlugin {
 		PluginManager pluginManager = getServer().getPluginManager();
 		PlayerListener playerListener = new PlayerListener();
 		BlockListener blockListener = new BlockListener();
+		EntityListener entityListener = new EntityListener();
+		
 		pluginManager.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Event.Priority.Normal, this);
 		pluginManager.registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Event.Priority.Highest, this);
 		pluginManager.registerEvent(Event.Type.PLAYER_RESPAWN, playerListener, Event.Priority.Highest, this);
+		pluginManager.registerEvent(Event.Type.FOOD_LEVEL_CHANGE, entityListener, Event.Priority.Highest, this);
 		pluginManager.registerEvent(Event.Type.BLOCK_BREAK, blockListener, Event.Priority.Highest, this);
 		pluginManager.registerEvent(Event.Type.BLOCK_PLACE, blockListener, Event.Priority.Highest, this);
 		
