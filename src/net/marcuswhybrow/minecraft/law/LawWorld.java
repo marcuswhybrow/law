@@ -63,29 +63,13 @@ public class LawWorld extends Entity implements Serializable {
 		}
 	}
 	
-	public Prison setSelectedPrison(String playerName, String prisonName) {
+	public Prison setSelectedPrison(String playerName, Prison prison) {
 		playerName = playerName.toLowerCase();
-		Prison prison = null;
 		
-		Prison removedPrison = selectedPrisons.remove(playerName.toLowerCase());
-		if (removedPrison != null) {
-			
-			// Notify listeners that a prison has been deselected
-			for (PrisonListener listener : Law.get().getPrisonListeners()) {
-				listener.onPrisonDeselected(removedPrison);
-			}
-		}
-		
-		if (prisonName != null) {
-			prison = this.getPrison(prisonName.toLowerCase());
-			if (prison != null) {
-				selectedPrisons.put(playerName.toLowerCase(), prison);
-				
-				// Notify listeners that a prison has been selected
-				for (PrisonListener listener : Law.get().getPrisonListeners()) {
-					listener.onPrisonSelected(prison);
-				}
-			}
+		if (prison != null) {
+			selectedPrisons.put(playerName.toLowerCase(), prison);
+		} else {
+			selectedPrisons.remove(playerName.toLowerCase());
 		}
 		
 		return prison;

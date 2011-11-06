@@ -1,7 +1,5 @@
 package net.marcuswhybrow.minecraft.law.commands.prison;
 
-import java.util.Collection;
-
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
@@ -25,7 +23,6 @@ public class CommandLawPrisonDelete extends Command {
 	private Player player;
 	private Prison prison;
 	private LawWorld lawWorld;
-	private Prison prevSelectedPrison;
 	
 	public CommandLawPrisonDelete() throws IllegalCommandDefinitionException {
 		super(DEFINITION);

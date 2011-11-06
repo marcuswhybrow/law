@@ -13,6 +13,7 @@ import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonSelectEvent;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
@@ -57,7 +58,10 @@ public class LawListener extends CustomEventListener implements Listener {
 			this.onPrisonCreate((LawPrisonCreateEvent) event);
 			
 		} else if (event instanceof LawPrisonDeleteEvent) {
-			onPrisonDelete((LawPrisonDeleteEvent) event);
+			this.onPrisonDelete((LawPrisonDeleteEvent) event);
+			
+		} else if (event instanceof LawPrisonSelectEvent) {
+			this.onPrisonSelect((LawPrisonSelectEvent) event);
 		}
 		
 		super.onCustomEvent(event);
@@ -151,9 +155,16 @@ public class LawListener extends CustomEventListener implements Listener {
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " freed \"" + targetPlayerName + "\" from \"" + cell.getPrison().getName() + "\" prison");
 		
 		String message = "Freed " + Colorise.entity(targetPlayerName) + " from " + Colorise.entity(cell.getPrison().getName()) + " prison.";
-		if (Bukkit.getPlayerExact(targetPlayerName) == null) {
+		
+		Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
+		
+		if (targetPlayer != null) {
+			// The player is online
 			message += " This player is offline but will be free when they return.";
+			
+			Law.fireEvent(new LawFreeReleaseEvent(sourcePlayer, targetPlayer, cell));
 		}
+		
 		MessageDispatcher.sendMessage(sourcePlayer, message);
 	}
 	
@@ -205,7 +216,7 @@ public class LawListener extends CustomEventListener implements Listener {
 		
 		// The logic
 		lawWorld.addPrison(createdPrison);
-		lawWorld.setSelectedPrison(sourcePlayer.getName(), createdPrison.getName());
+		Law.fireEvent(new LawPrisonSelectEvent(sourcePlayer, createdPrison));
 		
 		// Messages
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " created prison \"" + createdPrison.getName() + "\"");
@@ -220,6 +231,10 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * @param event The {@link LawPrisonDeleteEvent} instance
 	 */
 	public void onPrisonDelete(LawPrisonDeleteEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
 		Prison prison = event.getPrison();
 		Player sourcePlayer = event.getSourcePlayer();
 		LawWorld lawWorld = prison.getLawWorld();
@@ -241,19 +256,45 @@ public class LawListener extends CustomEventListener implements Listener {
 			if (numPrisons >= 2) {
 				MessageDispatcher.sendMessage(sourcePlayer, "Use " + Colorise.command(CommandLawPrisonSelect.DEFINITION) + " to choose one of the remaining" + Colorise.highlight(" " + prisons.length) + " prisons to work on.");
 			} else if (numPrisons == 1) {
+				Law.fireEvent(new LawPrisonSelectEvent(sourcePlayer, prisons[0]));
 				MessageDispatcher.sendMessage(sourcePlayer, "The only remaining prison " + Colorise.entity(prisons[0].getName()) + " is now the selected prison.");
 			}
 		} else if (prevSelectedPrison == null && numPrisons == 1) {
 			// When there is no previously selected prison, one has to
 			// set the new selected prison manually, as it cannot be inferred from
 			// the current state in the deletePrison method.
-			lawWorld.setSelectedPrison(sourcePlayer.getName(), prisons[0].getName());
+			Law.fireEvent(new LawPrisonSelectEvent(sourcePlayer, prisons[0]));
 			MessageDispatcher.sendMessage(sourcePlayer, "The only remaining prison " + Colorise.entity(prisons[0].getName()) + " is now the selected prison.");
 		}
 		if (numPrisons == 0) {
 			// There are no remaining prisons, the player must create a new one
+			Law.fireEvent(new LawPrisonSelectEvent(sourcePlayer, null));
 			MessageDispatcher.sendMessage(sourcePlayer, "There are no remaining prisons. Use " + Colorise.command(CommandLawPrisonCreate.DEFINITION) + " to start a new one.");
 		}
+		
+		Law.save();
+	}
+	
+	/**
+	 * Called when a player selects a new prison, or has
+	 * their selection set to no prison (represented by null.)
+	 * 
+	 * @param event The {@link LawPrisonSelectEvent} instance
+	 */
+	public void onPrisonSelect(LawPrisonSelectEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		Player sourcePlayer = event.getSourcePlayer();
+		Prison prison = event.getPrison();
+		LawWorld lawWorld = Law.get().getLawWorldForPlayer(sourcePlayer);
+		
+		// The logic
+		lawWorld.setSelectedPrison(sourcePlayer.getName(), prison);
+		
+		// Messages
+		MessageDispatcher.sendMessage(sourcePlayer, "The prison " + Colorise.entity(prison.getName()) + " has been selected. All prison commands now apply to this prison.");
 		
 		Law.save();
 	}

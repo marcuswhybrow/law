@@ -41,15 +41,12 @@ public class CommandLawPrisonSelect extends Command {
 			return PRISON_DOES_NOT_EXIST;
 		}
 		
-		lawWorld.setSelectedPrison(player.getName(), selectedPrison.getName());
-		Law.get().save();
-		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.sendMessage(player, "The prison " + Colorise.entity(selectedPrison.getName()) + " has been selected. All prison commands now apply to this prison.");
+		
 	}
 
 	@Override
