@@ -26,6 +26,7 @@ public class Plugin extends JavaPlugin {
 		BlockListener blockListener = new BlockListener();
 		pluginManager.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Event.Priority.Normal, this);
 		pluginManager.registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Event.Priority.Highest, this);
+		pluginManager.registerEvent(Event.Type.PLAYER_RESPAWN, playerListener, Event.Priority.Highest, this);
 		pluginManager.registerEvent(Event.Type.BLOCK_BREAK, blockListener, Event.Priority.Highest, this);
 		pluginManager.registerEvent(Event.Type.BLOCK_PLACE, blockListener, Event.Priority.Highest, this);
 		
