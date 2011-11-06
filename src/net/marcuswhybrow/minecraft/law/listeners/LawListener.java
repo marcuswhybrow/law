@@ -2,10 +2,13 @@ package net.marcuswhybrow.minecraft.law.listeners;
 
 import net.marcuswhybrow.minecraft.law.InventoryManager;
 import net.marcuswhybrow.minecraft.law.Law;
+import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
 import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
+import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
@@ -32,14 +35,22 @@ public class LawListener extends CustomEventListener implements Listener {
 	 */
 	@Override
 	public void onCustomEvent(Event event) {
+		
 		if (event instanceof LawImprisonEvent) {
 			this.onImprison((LawImprisonEvent) event);
+			
 		} else if (event instanceof LawImprisonSecureEvent) {
 			this.onImprisonSecure((LawImprisonSecureEvent) event);
+			
 		} else if (event instanceof LawFreeEvent) {
 			this.onFree((LawFreeEvent) event);
+			
 		} else if (event instanceof LawFreeReleaseEvent) {
 			this.onFreeRelease((LawFreeReleaseEvent) event);
+			
+		} else if (event instanceof LawPrisonCreateEvent) {
+			this.onPrisonCreate((LawPrisonCreateEvent) event);
+			
 		}
 		
 		super.onCustomEvent(event);
@@ -56,6 +67,10 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * @param event The {@link LawImprisonEvent} instance
 	 */
 	public void onImprison(LawImprisonEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
 		String targetPlayerName = event.getTargetPlayerName();
 		PrisonCell cell = event.getPrisonCell();
 		Player sourcePlayer = event.getSourcePlayer();
@@ -83,6 +98,10 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * @param event The {@link LawImprisonSecureEvent} instance
 	 */
 	public void onImprisonSecure(LawImprisonSecureEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
 		PrisonCell cell = event.getPrisonCell();
 		Player targetPlayer = event.getTargetPlayer();
 		
@@ -111,6 +130,10 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * @param event The {@link LawFreeEvent} insance
 	 */
 	public void onFree(LawFreeEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
 		Player sourcePlayer = event.getSourcePlayer();
 		String targetPlayerName = event.getTargetPlayerName();
 		PrisonCell cell = event.getPrisonCell();
@@ -133,6 +156,10 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * @param event The {@link LawFreeReleaseEvent} instance
 	 */
 	public void onFreeRelease(LawFreeReleaseEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
 		PrisonCell cell = event.getPrisonCell();
 		Player targetPlayer = event.getTargetPlayer();
 		
@@ -153,5 +180,30 @@ public class LawListener extends CustomEventListener implements Listener {
 		// Messages
 		MessageDispatcher.broadcast(Colorise.entity(targetPlayer.getName()) + " has been " + Colorise.action("freed") + " from " + Colorise.entity(cell.getPrison().getName()) + " prison.", "law.broadcasts.imprison");
 		MessageDispatcher.sendMessage(targetPlayer, "You have been freed from prison.");
+	}
+	
+	/**
+	 * Called when a player creates a new prison.
+	 * 
+	 * @param event The {@link LawPrisonCreateEvent} instance
+	 */
+	public void onPrisonCreate(LawPrisonCreateEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		Player sourcePlayer = event.getSourcePlayer();
+		Prison createdPrison = event.getCreatedPrison();
+		LawWorld lawWorld = createdPrison.getLawWorld();
+		
+		// The logic
+		lawWorld.addPrison(createdPrison);
+		lawWorld.setSelectedPrison(sourcePlayer.getName(), createdPrison.getName());
+		
+		// Messages
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " created prison \"" + createdPrison.getName() + "\"");
+		MessageDispatcher.sendMessage(sourcePlayer, "Prison " + Colorise.entity(createdPrison.getName()) + " has been created.");
+		
+		Law.save();
 	}
 }

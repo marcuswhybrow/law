@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law.commands.prison;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
@@ -47,18 +48,13 @@ public class CommandLawPrisonCreate extends Command {
 		}
 		
 		createdPrison = new Prison(lawWorld, prisonName);
-		lawWorld.addPrison(createdPrison);
-		
-		lawWorld.setSelectedPrison(player.getName(), createdPrison.getName());
-		Law.get().save();
 		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " created prison \"" + createdPrison.getName() + "\"");
-		MessageDispatcher.sendMessage(player, "Prison " + Colorise.entity(createdPrison.getName()) + " has been created.");
+		Law.fireEvent(new LawPrisonCreateEvent(player, createdPrison));
 	}
 
 	@Override
