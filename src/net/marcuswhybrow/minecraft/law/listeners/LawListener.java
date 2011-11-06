@@ -1,13 +1,18 @@
 package net.marcuswhybrow.minecraft.law.listeners;
 
+import java.util.Collection;
+
 import net.marcuswhybrow.minecraft.law.InventoryManager;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
+import net.marcuswhybrow.minecraft.law.commands.prison.CommandLawPrisonCreate;
+import net.marcuswhybrow.minecraft.law.commands.prison.CommandLawPrisonSelect;
 import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
 import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
@@ -51,6 +56,8 @@ public class LawListener extends CustomEventListener implements Listener {
 		} else if (event instanceof LawPrisonCreateEvent) {
 			this.onPrisonCreate((LawPrisonCreateEvent) event);
 			
+		} else if (event instanceof LawPrisonDeleteEvent) {
+			onPrisonDelete((LawPrisonDeleteEvent) event);
 		}
 		
 		super.onCustomEvent(event);
@@ -203,6 +210,50 @@ public class LawListener extends CustomEventListener implements Listener {
 		// Messages
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " created prison \"" + createdPrison.getName() + "\"");
 		MessageDispatcher.sendMessage(sourcePlayer, "Prison " + Colorise.entity(createdPrison.getName()) + " has been created.");
+		
+		Law.save();
+	}
+	
+	/**
+	 * Called when a player deletes a prison.
+	 * 
+	 * @param event The {@link LawPrisonDeleteEvent} instance
+	 */
+	public void onPrisonDelete(LawPrisonDeleteEvent event) {
+		Prison prison = event.getPrison();
+		Player sourcePlayer = event.getSourcePlayer();
+		LawWorld lawWorld = prison.getLawWorld();
+		Prison prevSelectedPrison = lawWorld.getSelectedPrison(sourcePlayer.getName());
+		
+		// The logic
+		lawWorld.deletePrison(prison);
+		
+		// Success messages
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " deleted prison \"" + prison.getName() + "\"");
+		MessageDispatcher.sendMessage(sourcePlayer, "The prison " + Colorise.entity(prison.getName()) + " has been deleted.");
+		
+		// If possible select a new prison automatically, or
+		// inform the player how to proceed.
+		Collection<Prison> prisonCollection = lawWorld.getPrisons();
+		Prison[] prisons = prisonCollection.toArray(new Prison[prisonCollection.size()]);
+		int numPrisons = prisons.length;
+		if (prevSelectedPrison == prison) {
+			if (numPrisons >= 2) {
+				MessageDispatcher.sendMessage(sourcePlayer, "Use " + Colorise.command(CommandLawPrisonSelect.DEFINITION) + " to choose one of the remaining" + Colorise.highlight(" " + prisons.length) + " prisons to work on.");
+			} else if (numPrisons == 1) {
+				MessageDispatcher.sendMessage(sourcePlayer, "The only remaining prison " + Colorise.entity(prisons[0].getName()) + " is now the selected prison.");
+			}
+		} else if (prevSelectedPrison == null && numPrisons == 1) {
+			// When there is no previously selected prison, one has to
+			// set the new selected prison manually, as it cannot be inferred from
+			// the current state in the deletePrison method.
+			lawWorld.setSelectedPrison(sourcePlayer.getName(), prisons[0].getName());
+			MessageDispatcher.sendMessage(sourcePlayer, "The only remaining prison " + Colorise.entity(prisons[0].getName()) + " is now the selected prison.");
+		}
+		if (numPrisons == 0) {
+			// There are no remaining prisons, the player must create a new one
+			MessageDispatcher.sendMessage(sourcePlayer, "There are no remaining prisons. Use " + Colorise.command(CommandLawPrisonCreate.DEFINITION) + " to start a new one.");
+		}
 		
 		Law.save();
 	}

@@ -5,6 +5,7 @@ import java.util.Collection;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
@@ -50,43 +51,13 @@ public class CommandLawPrisonDelete extends Command {
 		if (prison.hasPrisoners()) {
 			return PRISON_HAS_PRISONERS;
 		}
-		
-		// Delete but don't save yet
-		prevSelectedPrison = lawWorld.getSelectedPrison(player.getName());
-		lawWorld.deletePrison(prison);
 			
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		// Success messages
-		MessageDispatcher.consoleInfo(player.getName() + " deleted prison \"" + prison.getName() + "\"");
-		MessageDispatcher.sendMessage(player, "The prison " + Colorise.entity(prison.getName()) + " has been deleted.");
-		
-		Collection<Prison> prisonCollection = lawWorld.getPrisons();
-		
-		Prison[] prisons = prisonCollection.toArray(new Prison[prisonCollection.size()]);
-		int numPrisons = prisons.length;
-		
-		if (prevSelectedPrison == prison) {
-			if (numPrisons >= 2) {
-				MessageDispatcher.sendMessage(player, "Use " + Colorise.command(CommandLawPrisonSelect.DEFINITION) + " to choose one of the remaining" + Colorise.highlight(" " + prisons.length) + " prisons to work on.");
-			} else if (numPrisons == 1) {
-				MessageDispatcher.sendMessage(player, "The only remaining prison " + Colorise.entity(prisons[0].getName()) + " is now the selected prison.");
-			}
-		} else if (prevSelectedPrison == null && numPrisons == 1) {
-			// When there is no previously selected prison, one has to
-			// set the new selected prison manually, as it cannot be inferred from
-			// the current state in the deletePrison method.
-			lawWorld.setSelectedPrison(player.getName(), prisons[0].getName());
-			MessageDispatcher.sendMessage(player, "The only remaining prison " + Colorise.entity(prisons[0].getName()) + " is now the selected prison.");
-		}
-		
-		if (numPrisons == 0) {
-			MessageDispatcher.sendMessage(player, "There are no remaining prisons. Use " + Colorise.command(CommandLawPrisonCreate.DEFINITION) + " to start a new one.");
-		}
-		Law.get().save();
+		Law.fireEvent(new LawPrisonDeleteEvent(player, prison));
 	}
 
 	@Override
