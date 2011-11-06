@@ -48,7 +48,7 @@ public class CommandLawPrisonSetExit extends Command {
 		}
 		
 		prison.setExitPoint(player.getLocation());
-		prison.save();
+		Law.get().save();
 		
 		return SUCCESS;
 	}

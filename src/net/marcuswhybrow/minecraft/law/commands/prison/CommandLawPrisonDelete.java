@@ -47,7 +47,7 @@ public class CommandLawPrisonDelete extends Command {
 			return PRISON_DOES_NOT_EXIST;
 		}
 		
-		if (prison.canDelete() == false) {
+		if (prison.hasPrisoners()) {
 			return PRISON_HAS_PRISONERS;
 		}
 		
@@ -86,7 +86,7 @@ public class CommandLawPrisonDelete extends Command {
 		if (numPrisons == 0) {
 			MessageDispatcher.sendMessage(player, "There are no remaining prisons. Use " + Colorise.command(CommandLawPrisonCreate.DEFINITION) + " to start a new one.");
 		}
-		lawWorld.save();
+		Law.get().save();
 	}
 
 	@Override

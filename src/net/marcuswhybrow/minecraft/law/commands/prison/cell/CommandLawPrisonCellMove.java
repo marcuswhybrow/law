@@ -61,7 +61,7 @@ public class CommandLawPrisonCellMove extends Command {
 		}
 		
 		existingCell.setLocation(player.getLocation());
-		existingCell.save();
+		Law.get().save();
 		
 		return SUCCESS;
 	}

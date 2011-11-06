@@ -1,25 +1,26 @@
 package net.marcuswhybrow.minecraft.law.prison;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 
 import net.marcuswhybrow.minecraft.law.Entity;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
-import net.marcuswhybrow.minecraft.law.utilities.Config;
+import net.marcuswhybrow.minecraft.law.interfaces.PrisonListener;
+import net.marcuswhybrow.minecraft.law.serializable.SerializableLocation;
 import net.marcuswhybrow.minecraft.law.utilities.Validate;
 
 import org.bukkit.Location;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 
-public class Prison extends Entity {
+public class Prison extends Entity implements Serializable {
+	private static final long serialVersionUID = 272137797127892865L;
 	/** A reference to all the cells of this prison */
 	private HashMap<String, PrisonCell> cells;
 	/** The LawWorld this prison belongs to */
 	private LawWorld lawWorld;
 	/** The location where freed players transport to */
-	private Location exitPoint = null;
+	private SerializableLocation exitPoint;
 	
 	private int hashCode;
 	
@@ -29,7 +30,10 @@ public class Prison extends Entity {
 		
 		setName(name);
 		setParentPrisonerContainer(this.lawWorld);
-		setConfigPrefix(lawWorld.getConfigPrefix() + ".prisons." + this.getName());
+		
+		for (PrisonListener listener : Law.get().getPrisonListeners()) {
+			listener.onPrisonCreate(this);
+		}
 	}
 	
 	@Override
@@ -44,16 +48,15 @@ public class Prison extends Entity {
 	 * @param location The location at which freed players should appear.
 	 */
 	public void setExitPoint(Location location) {
-		this.exitPoint = location;
+		this.exitPoint = new SerializableLocation(location);
 		
-		if (Law.get().isActive()) {
-			setChanged("exitPoint");
+		for (PrisonListener listener : Law.get().getPrisonListeners()) {
+			listener.onPrisonSetExit(this);
 		}
 	}
 	
 	public void addCell(PrisonCell cell) {
 		cells.put(cell.getName().toLowerCase(), cell);
-		setChanged("cells");
 	}
 	
 	/**
@@ -65,13 +68,7 @@ public class Prison extends Entity {
 	 */
 	public PrisonCell removeCell(String cellName) {
 		
-		PrisonCell cell = cells.remove(cellName.toLowerCase());
-		
-		if (cell != null) {
-			cell.delete();
-			setChanged("cells");
-		}
-		return cell;
+		return cells.remove(cellName.toLowerCase());
 	}
 	
 	/**
@@ -111,72 +108,7 @@ public class Prison extends Entity {
 	}
 	
 	public Location getExitPoint() {
-		return this.exitPoint;
-	}
-	
-	@Override
-	public void onSave(boolean forceFullSave) {
-		if (forceFullSave) {
-			// For a full save first clean this node
-			configSet("", null);
-		}
-		
-		if (forceFullSave || isChanged("name")) {
-			configSet("name", getName());
-		}
-		if (forceFullSave || isChanged("exitPoint")) {
-			Config.setLocation(getConfigPrefix() + ".exit_point.location", exitPoint);
-		}
-		if (forceFullSave || isChanged("cells")) {
-			if (cells.size() == 0) {
-				// Writes an empty dictionary to the cells node
-				configSet("cells.inside", null);
-			} else {
-				for (PrisonCell cell : cells.values()) {
-					cell.save(forceFullSave);
-				}
-			}
-		} else if (isChanged("prisoners")) {
-			for (String playerName : this.getPrisoners()) {
-				// forceFullSave is definitely false here
-				this.getPrisonerCell(playerName).save(forceFullSave);
-			}
-		}
-	}
-	
-	@Override
-	public void setChanged(String section, boolean state) {
-		super.setChanged(section, state);
-		this.getLawWorld().setChanged("prisons");
-	}
-
-	@Override
-	public void onSetup() {
-		FileConfiguration config = Law.get().getPlugin().getConfig();
-		
-		setupExitPoint(config);
-		setupCells(config);
-	}
-	
-	private void setupCells(FileConfiguration config) {
-		ConfigurationSection cells = config.getConfigurationSection(getConfigPrefix() + ".cells");
-		
-		if (cells != null) {
-			for (String cellName : cells.getKeys(false)) {
-				PrisonCell cell = new PrisonCell(this, cellName);
-				addCell(cell);
-				
-				// Only setup the cell after adding it to the prison
-				cell.setup();
-			}
-		}
-	}
-	
-	private void setupExitPoint(FileConfiguration config) {
-		if (config.contains(getConfigPrefix() + ".exit_point")) {
-			Location location = Config.getLocation(getConfigPrefix() + ".exit_point.location");
-			setExitPoint(location);
-		}
+		return this.exitPoint.getLocation();
 	}
 	
 	public static boolean validateName(String prisonName) {
@@ -213,5 +145,11 @@ public class Prison extends Entity {
 			return this.getName() == other.getName() && this.getLawWorld() == other.getLawWorld();
 		}
 		return false;
+	}
+	
+	public void delete() {
+		for (PrisonListener listener : Law.get().getPrisonListeners()) {
+			listener.onPrisonDelete(this);
+		}
 	}
 }

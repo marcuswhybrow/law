@@ -61,12 +61,12 @@ public class CommandLawPrisonCellDelete extends Command {
 			return PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME;
 		}
 		
-		if (existingCell.canDelete() == false) {
+		if (existingCell.hasPrisoners()) {
 			return PRISON_CELL_HAS_PRISONERS;
 		}
 		
 		selectedPrison.removeCell(cellName);
-		selectedPrison.save();
+		Law.get().save();
 		
 		return SUCCESS;
 	}

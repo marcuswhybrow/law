@@ -61,7 +61,7 @@ public class CommandLawPrisonCellCreate extends Command {
 		
 		createdCell = new PrisonCell(selectedPrison, cellName, player.getLocation());
 		selectedPrison.addCell(createdCell);
-		selectedPrison.save();
+		Law.get().save();
 		
 		return SUCCESS;
 	}

@@ -42,7 +42,7 @@ public class CommandLawPrisonSelect extends Command {
 		}
 		
 		lawWorld.setSelectedPrison(player.getName(), selectedPrison.getName());
-		lawWorld.save();
+		Law.get().save();
 		
 		return SUCCESS;
 	}

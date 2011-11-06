@@ -1,13 +1,13 @@
 package net.marcuswhybrow.minecraft.law.listeners;
 
-import net.marcuswhybrow.minecraft.law.InventoryManager;
+import net.marcuswhybrow.minecraft.law.interfaces.ImprisonmentListener;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.Settings;
+import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
-import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -26,17 +26,20 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 			return;
 		}
 		
-		Location location = lawWorld.removeLatentTeleport(player.getName());
-		
-		if (location != null) {
-			player.teleport(location);
-			lawWorld.save();
+		if (lawWorld.hasUnsecuredPrisoner(player.getName())) {
+			PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
+			if (cell != null) {
+				for (ImprisonmentListener listener : Law.get().getImprisonmentListeners()) {
+					listener.onImprison(player, cell);
+				}
+			}
 		}
 		
-		InventoryManager.Action action = lawWorld.removeLatentInventoryChange(player.getName());
-		if (action != null) {
-			InventoryManager.preformAction(player, action);
-			lawWorld.save();
+		if (lawWorld.hasUnreleasedPrisoner(player.getName())) {
+			PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
+			for (ImprisonmentListener listener : Law.get().getImprisonmentListeners()) {
+				listener.onFree(player, cell);
+			}
 		}
 	}
 	

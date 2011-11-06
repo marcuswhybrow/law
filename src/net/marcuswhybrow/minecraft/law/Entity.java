@@ -1,29 +1,34 @@
 package net.marcuswhybrow.minecraft.law;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
 import net.marcuswhybrow.minecraft.law.interfaces.Referenceable;
-import net.marcuswhybrow.minecraft.law.interfaces.Saveable;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
-public abstract class Entity implements Referenceable, PrisonerContainer, Saveable {
-	
+public abstract class Entity implements Referenceable, PrisonerContainer, Serializable {
+	private static final long serialVersionUID = -3452269165185206945L;
+	/** A map of prisoner names to prison cells */
 	private Map<String, PrisonCell> prisoners;
+	/** A map of prisoner names to prison cells, for players which are being released from prison */
+	private Map<String, PrisonCell> prisonersToRelease;
+	/** A map of prisoner names to prison cells, for players which are to be imprisoned */
+	private Map<String, PrisonCell> prisonersToImprison;
+	/** The in-game name of this entity */
 	private String name;
-	private Map<String, Boolean> changeMap;
 	private PrisonerContainer parent;
 	private Set<PrisonerContainer> children;
-	private String configPrefix;
 	
 	public Entity() {
 		this.prisoners = new HashMap<String, PrisonCell>();
+		this.prisonersToRelease = new HashMap<String, PrisonCell>();
+		this.prisonersToImprison = new HashMap<String, PrisonCell>();
 		this.name = null;
 		this.parent = null;
 		this.children = null;
-		this.changeMap = new HashMap<String, Boolean>();
 	}
 
 	@Override
@@ -47,7 +52,7 @@ public abstract class Entity implements Referenceable, PrisonerContainer, Saveab
 			return;
 		}
 		
-		cell.removePrisoner(playerName);
+		cell.releasePrisoner(playerName);
 	}
 
 	@Override
@@ -101,8 +106,29 @@ public abstract class Entity implements Referenceable, PrisonerContainer, Saveab
 		if (this.parent != null) {
 			this.parent.addPrisoner(playerName, cell);
 		}
-		this.prisoners.put(playerName.toLowerCase(), cell);
-		setChanged("prisoners");
+		this.prisonersToImprison.put(playerName.toLowerCase(), cell);
+	}
+	
+	@Override
+	public void securePrisoner(String playerName) {
+		if (this.parent != null) {
+			this.parent.securePrisoner(playerName);
+		}
+		PrisonCell cell = this.prisonersToImprison.get(playerName.toLowerCase());
+		if (cell != null) {
+			this.prisoners.put(playerName.toLowerCase(), cell);
+		}
+	}
+	
+	@Override
+	public void releasePrisoner(String playerName) {
+		if (this.parent != null) {
+			this.parent.releasePrisoner(playerName);
+		}
+		PrisonCell cell = this.prisoners.remove(playerName.toLowerCase());
+		if (cell != null) {
+			this.prisonersToRelease.put(playerName.toLowerCase(), cell);
+		}
 	}
 
 	@Override
@@ -111,12 +137,29 @@ public abstract class Entity implements Referenceable, PrisonerContainer, Saveab
 			this.parent.removePrisoner(playerName);
 		}
 		this.prisoners.remove(playerName.toLowerCase());
-		setChanged("prisoners");
+		this.prisonersToRelease.remove(playerName.toLowerCase());
+	}
+	
+	@Override
+	public boolean hasUnreleasedPrisoner(String playerName) {
+		return this.prisonersToRelease.containsKey(playerName.toLowerCase());
+	}
+	
+	@Override
+	public boolean hasUnsecuredPrisoner(String playerName) {
+		return this.prisonersToImprison.containsKey(playerName.toLowerCase());
 	}
 
 	@Override
 	public PrisonCell getPrisonerCell(String playerName) {
-		return this.prisoners.get(playerName.toLowerCase());
+		PrisonCell cell = this.prisonersToImprison.get(playerName.toLowerCase());
+		if (cell == null) {
+			cell = this.prisoners.get(playerName.toLowerCase());
+		}
+		if (cell == null) {
+			cell = this.prisonersToRelease.get(playerName.toLowerCase());
+		}
+		return cell;
 	}
 
 	@Override
@@ -127,99 +170,24 @@ public abstract class Entity implements Referenceable, PrisonerContainer, Saveab
 	@Override
 	public void setName(String name) {
 		this.name = name;
-		setChanged("name");
 	}
 
 	@Override
 	public String getName() {
 		return this.name;
 	}
-
-	@Override
-	public abstract void onSetup();
 	
 	@Override
-	public void setConfigPrefix(String configPrefix) {
-		this.configPrefix = configPrefix;
-	}
-
-	@Override
-	public String getConfigPrefix() {
-		return this.configPrefix;
-	}
-	
-	public void save() {
-		this.save(false);
-	}
-	
-	@Override
-	public final void save(boolean forceFullSave) {
-		if (Law.get().isActive() == false) {
-			return;
+	public boolean hasPrisoners() {
+		if (this.prisoners.isEmpty() == false) {
+			return true;
 		}
-		
-		this.onSave(forceFullSave);
-		
-		this.configSave();
-		
-		this.changeMap.clear();
-	}
-	
-	public abstract void onSave(boolean forceFullSave);
-	
-	@Override
-	public void setup() {
-		if (Law.get().isActive() == false) {
-			this.onSetup();
+		if (this.prisonersToImprison.isEmpty() == false) {
+			return true;
 		}
-	}
-	
-	public void setChanged(String sectionName) {
-		this.setChanged(sectionName, true);
-	}
-	
-	@Override
-	public void setChanged(String name, boolean state) {
-		if (Law.get().isActive()) {
-			this.changeMap.put(name, state);
+		if (this.prisonersToRelease.isEmpty() == false) {
+			return true;
 		}
-	}
-	
-	@Override
-	public boolean isChanged(String name) {
-		if (Law.get().isActive() == false) {
-			return false;
-		}
-		
-		Boolean state = changeMap.get(name);
-		if (state == null) {
-			return false;
-		}
-		
-		return state;
-	}
-	
-	@Override
-	public void delete() {
-		// Remove from configuration file
-		if (canDelete()) {
-			this.configSet("", null);
-			this.configSave();
-		}
-	}
-	
-	@Override
-	public void configSet(String relativePath, Object o) {
-		Law.get().getPlugin().getConfig().set(getConfigPrefix() + (relativePath.length() > 0 ? "." : "") + relativePath, o);
-	}
-	
-	@Override
-	public void configSave() {
-		Law.get().getPlugin().saveConfig();
-	}
-	
-	@Override
-	public boolean canDelete() {
-		return this.getPrisoners().size() == 0;
+		return false;
 	}
 }

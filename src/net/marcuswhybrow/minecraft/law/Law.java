@@ -1,14 +1,25 @@
 package net.marcuswhybrow.minecraft.law;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
 
+import net.marcuswhybrow.minecraft.law.interfaces.ImprisonmentListener;
+import net.marcuswhybrow.minecraft.law.interfaces.PrisonCellListener;
+import net.marcuswhybrow.minecraft.law.interfaces.PrisonListener;
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
+import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
+import net.marcuswhybrow.minecraft.law.utilities.Utils;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 
@@ -19,14 +30,26 @@ public class Law {
 	public static final String ON_DISABLE_MESSAGE = PLUGIN_NAME + " disabled.";
 	public static final boolean FORCE_FULL_SAVE = true;
 	
+	private static char separator = File.separatorChar;
+	private static String stateFilePath = "plugins" + separator + "Law";
+	private static String stateFileTempPath = "plugins" + separator + "Law";
 	private Plugin plugin = null;
 	private static Law self = null;
 	private HashMap<String, LawWorld> worlds;
 	private enum State {SETUP, ACTIVE};
 	private State state;
+	/** The list of imprisonment listeners to notify of imprisonment events. */
+	private List<ImprisonmentListener> imprisonmentListeners;
+	/** The list of prison listeners to notify of prison events. */
+	private List<PrisonListener> prisonListeners;
+	/** The list of prison cell listeners to notify of prison cell events. */
+	private List<PrisonCellListener> prisonCellListeners;
 	
 	private Law() {
 		worlds = new HashMap<String, LawWorld>();
+		this.imprisonmentListeners = new ArrayList<ImprisonmentListener>();
+		this.prisonListeners = new ArrayList<PrisonListener>();
+		this.prisonCellListeners = new ArrayList<PrisonCellListener>();
 		state = State.SETUP;
 	}
 	
@@ -51,12 +74,17 @@ public class Law {
 	
 	public void setup() {
 		
+		// Load objects from file
+		this.load();
+		
+		// Create worlds which don't exist yet
 		for (World world : Bukkit.getWorlds()) {
-			LawWorld lawWorld = new LawWorld(world);
-			this.worlds.put(lawWorld.getName(), lawWorld);
-			lawWorld.setup();
+			if (worlds.containsKey(world.getName()) == false) {
+				this.worlds.put(world.getName(), new LawWorld(world));
+			}
 		}
 		
+		// TODO remove this mechanism
 		this.setActive();
 	}
 	
@@ -76,13 +104,6 @@ public class Law {
 		return getLawWorld(player.getWorld());
 	}
 	
-	public void fullSave() {
-		Iterator<LawWorld> it = worlds.values().iterator();
-		while (it.hasNext()) {
-			it.next().save(Law.FORCE_FULL_SAVE);
-		}
-	}
-	
 	public static String getVersion() {
 		return PLUGIN_VERSION;
 	}
@@ -100,19 +121,14 @@ public class Law {
 			return false;
 		}
 		
-		// Give the player the imprisoned permission
+		// Imprison the player now if they are online
 		
 		PrisonCell cell = prisonerContainer.getPrisonerCell(playerName);
 		Player player = Bukkit.getPlayerExact(playerName);
 		if (player != null) {
-			// Teleport the player right now to the location
-			player.teleport(cell.getLocation());
-			InventoryManager.confiscate(player);
-		} else {
-			LawWorld lawWorld = cell.getPrison().getLawWorld();
-			lawWorld.addLatentTeleport(playerName, cell.getLocation());
-			lawWorld.addLatentInventoryChange(playerName, InventoryManager.Action.CONFISCATE);
-			lawWorld.save();
+			for (ImprisonmentListener listener : imprisonmentListeners) {
+				listener.onImprison(player, cell);
+			}
 		}
 		
 		return true;
@@ -125,44 +141,161 @@ public class Law {
 		}
 		
 		prisonerContainer.freePlayer(playerName);
-		
 		Player player = Bukkit.getPlayerExact(playerName);
-		Location location = cell.getPrison().getExitPoint();
-		
-		if (location == null) {
-			location = cell.getPrison().getLawWorld().getBukkitWorld().getSpawnLocation();
-		}
-		
 		if (player != null) {
-			player.teleport(location);
-			InventoryManager.restore(player);
-		} else {
-			LawWorld lawWorld = cell.getPrison().getLawWorld();
+			for (ImprisonmentListener listener : imprisonmentListeners) {
+				listener.onFree(player, cell);
+			}
+		}
+	}
+	
+	/**
+	 * Save the plugin state to disk
+	 */
+	public void save() {
+		new File(stateFilePath).mkdirs();
+		new File(stateFileTempPath).mkdirs();
+		
+		File file = new File(stateFilePath + separator + "state.dat");
+		File tempFile = new File(stateFileTempPath + separator + "state-temp.dat");
+		
+		try {
+			tempFile.delete();
+			tempFile.createNewFile();
 			
-			// Since there are only two states (free and imprisoned) and previous tests
-			// returned if the player is already free, if a location exists it is
-			// because the player was to be imprisoned.
-			// If this is the case we can just remove the teleport directive so that
-			// the player in question is none the wiser when they next login.
-			Location storedLocation = lawWorld.removeLatentTeleport(playerName);
-			if (storedLocation == null) {
-				// Otherwise write the teleport instruction as the player is imprisoned
-				lawWorld.addLatentTeleport(playerName, location);
+			FileOutputStream fos = new FileOutputStream(tempFile);
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			
+			oos.writeObject(worlds.values().toArray(new LawWorld[worlds.size()]));
+			oos.close();
+			
+			if (tempFile.renameTo(file) == false) {
+				file.delete();
+				tempFile.renameTo(file);
 			}
 			
-			lawWorld.addLatentInventoryChange(playerName, InventoryManager.Action.RESTORE);
+		} catch (Exception e) {
+			MessageDispatcher.consoleWarning("Could not save state to disk.");
+			MessageDispatcher.consoleWarning(Utils.getStackTraceAsString(e));
+		}
+	}
+	
+	/**
+	 * Load the plugin state from disk
+	 */
+	public void load() {
+		File file = new File(stateFilePath + separator + "state.dat");
+		
+		if (file.exists() == false) {
+			// try and look for the temp file instead
+			file = new File(stateFileTempPath + separator + "state-temp.dat");
+			if (file.exists() == false) {
+				return;
+			} else {
+				file.renameTo(new File(stateFilePath + separator + "state.dat"));
+			}
+		}
+		
+		try {
+			FileInputStream fis = new FileInputStream(file);
+			ObjectInputStream ois = new ObjectInputStream(fis);
 			
-			lawWorld.save();
+			for (LawWorld lawWorld : (LawWorld[]) ois.readObject()) {
+				MessageDispatcher.consoleInfo("loading world \"" + lawWorld.getBukkitWorld().getName() + "\"");
+				for (Prison p : lawWorld.getPrisons()) {
+					MessageDispatcher.consoleInfo("  prison: " + p.getName());
+				}
+				worlds.put(lawWorld.getName(), lawWorld);
+			}
+			ois.close();
+		} catch (Exception e) {
+			MessageDispatcher.consoleWarning("Could not read state from disk.");
+			MessageDispatcher.consoleWarning(Utils.getStackTraceAsString(e));
 		}
 	}
 	
-	public void save() {
-		save(false);
+	/**
+	 * Adds an ImprisonmentListener to be notified of imprisonment events.
+	 * 
+	 * @param listener The ImprisonmentListener to be added 
+	 */
+	public void addImprisonmentListener(ImprisonmentListener listener) {
+		this.imprisonmentListeners.add(listener);
 	}
 	
-	public void save(boolean forceFullSave) {
-		for (LawWorld lawWorld : worlds.values()) {
-			lawWorld.save(forceFullSave);
-		}
+	/**
+	 * Removes and ImprisonmentListener from being notified of
+	 * imprisonment events.
+	 * 
+	 * @param listener The ImprisomentListener to be removed
+	 */
+	public void removeImprisonmentListener(ImprisonmentListener listener) {
+		this.imprisonmentListeners.remove(listener);
+	}
+	
+	/**
+	 * Get the list of imprisonment listeners.
+	 * 
+	 * @return The list of registered imprisonment listeners
+	 */
+	public List<ImprisonmentListener> getImprisonmentListeners() {
+		return this.imprisonmentListeners;
+	}
+	
+	/**
+	 * Adds an PrisonListener to be notified of prison events.
+	 * 
+	 * @param listener The PrisonListener to be added 
+	 */
+	public void addPrisonListener(PrisonListener listener) {
+		this.prisonListeners.add(listener);
+	}
+	
+	/**
+	 * Removes and PrisonListener from being notified of
+	 * prison events.
+	 * 
+	 * @param listener The PrisonListener to be removed
+	 */
+	public void removePrisonListener(PrisonListener listener) {
+		this.prisonListeners.remove(listener);
+	}
+	
+	/**
+	 * Get the list of prison listeners.
+	 * 
+	 * @return The list of registered prison listeners
+	 */
+	public List<PrisonListener> getPrisonListeners() {
+		return this.prisonListeners;
+	}
+	
+	/**
+	 * Adds an PrisonCellListener to be notified of prison
+	 * cell events.
+	 * 
+	 * @param listener The PrisonCellListener to be added 
+	 */
+	public void addPrisonCellListener(PrisonCellListener listener) {
+		this.prisonCellListeners.add(listener);
+	}
+	
+	/**
+	 * Removes and PrisonCellListener from being notified of
+	 * prison cell events.
+	 * 
+	 * @param listener The PrisonCellListener to be removed
+	 */
+	public void removePrisonCellListener(PrisonCellListener listener) {
+		this.prisonCellListeners.remove(listener);
+	}
+	
+	/**
+	 * Get the list of prison cell listeners.
+	 * 
+	 * @return The list of registered prison cell listeners.
+	 */
+	public List<PrisonCellListener> getCellListeners() {
+		return this.prisonCellListeners;
 	}
 }
