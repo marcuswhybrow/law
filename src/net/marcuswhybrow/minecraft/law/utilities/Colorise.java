@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 public class Colorise {
 	public static final ChatColor DEFAULT = ChatColor.WHITE;
 	public static final ChatColor SUCCESS = ChatColor.GREEN;
+	public static final ChatColor ACTION = ChatColor.GREEN;
 	public static final ChatColor ERROR = ChatColor.RED;
 	public static final ChatColor COMMAND = ChatColor.YELLOW;
 	public static final ChatColor ENTITY = ChatColor.AQUA;
@@ -38,5 +39,9 @@ public class Colorise {
 	
 	public static String highlight(String text) {
 		return color(HIGHLIGHT, text);
+	}
+	
+	public static String action(String text) {
+		return color(ACTION, text);
 	}
 }

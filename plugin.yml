@@ -6,6 +6,14 @@ commands:
         description: The law command list
         usage: /law
 permissions:
+    law.broadcasts.imprison:
+        description: Allows for viewing of imprisonment broadcasts
+        default: op
+    law.broadcasts.free:
+        description: Allows for viewing of freed broadcasts
+        default: op
+        
+    
     law.commands.*:
         description: Gives access to all the commands
         default: op

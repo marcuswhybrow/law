@@ -8,7 +8,6 @@ import java.util.Set;
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
 import net.marcuswhybrow.minecraft.law.interfaces.Referenceable;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
-import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
 public abstract class Entity implements Referenceable, PrisonerContainer, Serializable {
 	private static final long serialVersionUID = -3452269165185206945L;
