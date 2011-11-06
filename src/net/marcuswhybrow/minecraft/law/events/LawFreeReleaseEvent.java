@@ -4,18 +4,18 @@ import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 import org.bukkit.entity.Player;
 
-public class LawImprisonSecureEvent extends LawEvent {
-	private static final long serialVersionUID = 7841604312008447536L;
+public class LawFreeReleaseEvent extends LawEvent {
+	private static final long serialVersionUID = -1726278830957239690L;
 	
-	/** The player which is imprisoning the target player. */
+	/** The player which is freeing the target player. */
 	private Player sourcePlayer;
-	/** The player which is being imprisoned. */
+	/** The player which is being freed from prison. */
 	private Player targetPlayer;
-	/** The prison cell the target player is being imprisoned within. */
+	/** The prison cell which the target player is being freed from. */
 	private PrisonCell prisonCell;
 
-	public LawImprisonSecureEvent(final Player sourcePlayer, final Player targetPlayer, final PrisonCell prisonCell) {
-		super("LawImprisonSecureEvent");
+	public LawFreeReleaseEvent(final Player sourcePlayer, final Player targetPlayer, final PrisonCell prisonCell) {
+		super("LawFreeReleaseEvent");
 		
 		this.setSourcePlayer(sourcePlayer);
 		this.setTargetPlayer(targetPlayer);
@@ -63,4 +63,5 @@ public class LawImprisonSecureEvent extends LawEvent {
 	public void setPrisonCell(PrisonCell prisonCell) {
 		this.prisonCell = prisonCell;
 	}
+
 }

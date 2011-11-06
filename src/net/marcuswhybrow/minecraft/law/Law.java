@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
+import net.marcuswhybrow.minecraft.law.events.LawEvent;
 import net.marcuswhybrow.minecraft.law.interfaces.ImprisonmentListener;
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonCellListener;
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonListener;
@@ -75,7 +76,7 @@ public class Law {
 	public void setup() {
 		
 		// Load objects from file
-		this.load();
+		Law.load();
 		
 		// Create worlds which don't exist yet
 		for (World world : Bukkit.getWorlds()) {
@@ -112,7 +113,7 @@ public class Law {
 		return this.worlds.values();
 	}
 	
-	public boolean imprisonPlayer(String playerName, PrisonerContainer prisonerContainer) {
+	public static boolean imprisonPlayer(String playerName, PrisonerContainer prisonerContainer) {
 		if (prisonerContainer == null) {
 			throw new IllegalArgumentException("Prisoner container cannot be null");
 		}
@@ -121,38 +122,22 @@ public class Law {
 			return false;
 		}
 		
-		// Imprison the player now if they are online
-		
-		PrisonCell cell = prisonerContainer.getPrisonerCell(playerName);
-		Player player = Bukkit.getPlayerExact(playerName);
-		if (player != null) {
-			for (ImprisonmentListener listener : imprisonmentListeners) {
-				listener.onImprison(player, cell);
-			}
-		}
-		
 		return true;
 	}
 	
-	public void freePlayer(String playerName, PrisonerContainer prisonerContainer) {
+	public static void freePlayer(String playerName, PrisonerContainer prisonerContainer) {
 		PrisonCell cell = prisonerContainer.getPrisonerCell(playerName);
 		if (cell == null) {
 			return;
 		}
 		
 		prisonerContainer.freePlayer(playerName);
-		Player player = Bukkit.getPlayerExact(playerName);
-		if (player != null) {
-			for (ImprisonmentListener listener : imprisonmentListeners) {
-				listener.onFree(player, cell);
-			}
-		}
 	}
 	
 	/**
 	 * Save the plugin state to disk
 	 */
-	public void save() {
+	public static void save() {
 		new File(stateFilePath).mkdirs();
 		new File(stateFileTempPath).mkdirs();
 		
@@ -166,7 +151,7 @@ public class Law {
 			FileOutputStream fos = new FileOutputStream(tempFile);
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			
-			oos.writeObject(worlds.values().toArray(new LawWorld[worlds.size()]));
+			oos.writeObject(get().worlds.values().toArray(new LawWorld[get().worlds.size()]));
 			oos.close();
 			
 			if (tempFile.renameTo(file) == false) {
@@ -183,7 +168,7 @@ public class Law {
 	/**
 	 * Load the plugin state from disk
 	 */
-	public void load() {
+	public static void load() {
 		File file = new File(stateFilePath + separator + "state.dat");
 		
 		if (file.exists() == false) {
@@ -205,7 +190,7 @@ public class Law {
 				for (Prison p : lawWorld.getPrisons()) {
 					MessageDispatcher.consoleInfo("  prison: " + p.getName());
 				}
-				worlds.put(lawWorld.getName(), lawWorld);
+				get().worlds.put(lawWorld.getName(), lawWorld);
 			}
 			ois.close();
 		} catch (Exception e) {
@@ -297,5 +282,14 @@ public class Law {
 	 */
 	public List<PrisonCellListener> getCellListeners() {
 		return this.prisonCellListeners;
+	}
+	
+	/**
+	 * Fires a {@link LawEvent} event.
+	 * 
+	 * @param event The {@link LawEvent} subclass to fire
+	 */
+	public static void fireEvent(LawEvent event) {
+		get().getPlugin().getServer().getPluginManager().callEvent(event);
 	}
 }

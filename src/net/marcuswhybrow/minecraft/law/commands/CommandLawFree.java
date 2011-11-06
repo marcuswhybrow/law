@@ -3,12 +3,12 @@ package net.marcuswhybrow.minecraft.law.commands;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -47,22 +47,12 @@ public class CommandLawFree extends Command {
 			return PLAYER_IS_NOT_IMPRISONED_IN_THIS_WORLD;
 		}
 		
-		Law.get().freePlayer(targetPlayerName, cell);
-		Law.get().save();
-			
-		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " freed \"" + targetPlayerName + "\" from \"" + cell.getPrison().getName() + "\" prison");
-		
-		String message = "Freed " + Colorise.entity(targetPlayerName) + " from " + Colorise.entity(cell.getPrison().getName()) + " prison.";
-		if (Bukkit.getPlayerExact(targetPlayerName) == null) {
-			message += " This player is offline but will be free when they return.";
-		}
-		MessageDispatcher.sendMessage(player, message);
+		Law.fireEvent(new LawFreeEvent(player, targetPlayerName, cell));
 	}
 
 	@Override

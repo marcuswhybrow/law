@@ -3,7 +3,6 @@ package net.marcuswhybrow.minecraft.law.events;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 
 /**
  * Represents the event triggered when a player is imprisoned.
@@ -16,7 +15,7 @@ import org.bukkit.event.Cancellable;
  * @author Marcus Whybrow
  *
  */
-public class LawImprisonEvent extends LawEvent implements Cancellable {
+public class LawImprisonEvent extends LawEvent {
 	private static final long serialVersionUID = -6159307465018927999L;
 	/** The name of the player that is being imprisoned. */
 	private String targetPlayerName;
@@ -24,26 +23,13 @@ public class LawImprisonEvent extends LawEvent implements Cancellable {
 	private Player sourcePlayer;
 	/** The prison cell that the target player is imprisoned within. */
 	private PrisonCell prisonCell;
-	/** True if the event has been cancelled */
-	private boolean isCancelled;
 
-	protected LawImprisonEvent(final Player sourcePlayer, final String targetPlayerName, final PrisonCell prisonCell) {
+	public LawImprisonEvent(final Player sourcePlayer, final String targetPlayerName, final PrisonCell prisonCell) {
 		super("LawImprisonEvent");
 		
 		this.setSourcePlayer(sourcePlayer);
 		this.setTargetPlayerName(targetPlayerName);
 		this.setPrisonCell(prisonCell);
-		this.isCancelled = false;
-	}
-
-	@Override
-	public boolean isCancelled() {
-		return isCancelled;
-	}
-
-	@Override
-	public void setCancelled(boolean isCancelled) {
-		this.isCancelled = isCancelled;
 	}
 
 	public String getTargetPlayerName() {

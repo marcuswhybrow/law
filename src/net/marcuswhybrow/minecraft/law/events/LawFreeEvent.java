@@ -4,21 +4,21 @@ import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 import org.bukkit.entity.Player;
 
-public class LawImprisonSecureEvent extends LawEvent {
-	private static final long serialVersionUID = 7841604312008447536L;
+public class LawFreeEvent extends LawEvent {
+	private static final long serialVersionUID = 2960186025135779032L;
 	
-	/** The player which is imprisoning the target player. */
+	/** The player which freed the target player. */
 	private Player sourcePlayer;
-	/** The player which is being imprisoned. */
-	private Player targetPlayer;
-	/** The prison cell the target player is being imprisoned within. */
+	/** The name of the target player which will be freed. */
+	private String targetPlayerName;
+	/** The prison cell which the target player will be freed from. */
 	private PrisonCell prisonCell;
 
-	public LawImprisonSecureEvent(final Player sourcePlayer, final Player targetPlayer, final PrisonCell prisonCell) {
-		super("LawImprisonSecureEvent");
+	public LawFreeEvent(final Player sourcePlayer, final String targetPlayerName, final PrisonCell prisonCell) {
+		super("LawFreeEvent");
 		
 		this.setSourcePlayer(sourcePlayer);
-		this.setTargetPlayer(targetPlayer);
+		this.setTargetPlayerName(targetPlayerName);
 		this.setPrisonCell(prisonCell);
 	}
 
@@ -37,17 +37,17 @@ public class LawImprisonSecureEvent extends LawEvent {
 	}
 
 	/**
-	 * @return the targetPlayer
+	 * @return the targetPlayerName
 	 */
-	public Player getTargetPlayer() {
-		return targetPlayer;
+	public String getTargetPlayerName() {
+		return targetPlayerName;
 	}
 
 	/**
-	 * @param targetPlayer the targetPlayer to set
+	 * @param targetPlayerName the targetPlayerName to set
 	 */
-	public void setTargetPlayer(Player targetPlayer) {
-		this.targetPlayer = targetPlayer;
+	public void setTargetPlayerName(String targetPlayerName) {
+		this.targetPlayerName = targetPlayerName;
 	}
 
 	/**

@@ -5,6 +5,7 @@ import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
 import net.marcuswhybrow.minecraft.law.commands.prison.CommandLawPrisonSetExit;
 import net.marcuswhybrow.minecraft.law.commands.prison.cell.CommandLawPrisonCellCreate;
+import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
@@ -12,7 +13,6 @@ import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.Commands;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
-import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -34,6 +34,7 @@ public class CommandLawImprison extends Command {
 	private String targetPrisonName;
 	private String targetCellName;
 	private Prison targetPrison;
+	private PrisonCell targetCell;
 	
 	public CommandLawImprison() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
@@ -76,7 +77,7 @@ public class CommandLawImprison extends Command {
 			return PRISON_IS_NOT_OPERATIONAL;
 		}
 		
-		PrisonCell targetCell = targetPrison.getCell(targetCellName);
+		targetCell = targetPrison.getCell(targetCellName);
 		
 		if (targetCell == null) {
 			return PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME;
@@ -86,21 +87,12 @@ public class CommandLawImprison extends Command {
 			return PLAYER_IS_ALREADY_IMPRISONED_IN_THAT_CELL;
 		}
 		
-		Law.get().imprisonPlayer(targetPlayerName, targetCell);
-		Law.get().save();
-		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " imprisoned \"" + targetPlayerName + "\" in \"" + targetPrison.getName() + "\" prison");
-		
-		if (Bukkit.getPlayerExact(targetPlayerName) != null) {
-			MessageDispatcher.sendMessage(player, "Imprisoned " + Colorise.entity(targetPlayerName) + " in " + Colorise.entity(targetPrison.getName()) + " prison.");
-		} else {
-			MessageDispatcher.sendMessage(player, "Imprisoned " + Colorise.entity(targetPlayerName) + " in " + Colorise.entity(targetPrison.getName()) + " prison. This player is offline but will be imprisoned when they return.");
-		}
+		Law.fireEvent(new LawImprisonEvent(player, targetPlayerName, targetCell));
 	}
 
 	@Override

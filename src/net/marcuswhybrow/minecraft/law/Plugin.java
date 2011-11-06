@@ -57,7 +57,7 @@ public class Plugin extends JavaPlugin {
 	@Override
 	public void onDisable() {
 		// Saves all objects with state to file
-		law.save();
+		Law.save();
 		
 		// Log that everything has been disabled
 		MessageDispatcher.consoleInfo(Law.ON_DISABLE_MESSAGE);
