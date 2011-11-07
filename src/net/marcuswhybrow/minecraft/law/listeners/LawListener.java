@@ -12,6 +12,7 @@ import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCellCreateEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCellDeleteEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonSelectEvent;
@@ -71,6 +72,8 @@ public class LawListener extends CustomEventListener implements Listener {
 		} else if (event instanceof LawPrisonCellCreateEvent) {
 			this.onPrisonCellCreate((LawPrisonCellCreateEvent) event);
 			
+		} else if (event instanceof LawPrisonCellDeleteEvent) {
+			this.onPrisonCellDelete((LawPrisonCellDeleteEvent) event);
 		}
 		
 		super.onCustomEvent(event);
@@ -331,6 +334,11 @@ public class LawListener extends CustomEventListener implements Listener {
 		Law.save();
 	}
 	
+	/**
+	 * Called when a player creates a new prison cell.
+	 * 
+	 * @param event The {@link LawPrisonCellCreateEvent} instance
+	 */
 	public void onPrisonCellCreate(LawPrisonCellCreateEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -340,10 +348,36 @@ public class LawListener extends CustomEventListener implements Listener {
 		PrisonCell cell = event.getPrisonCell();
 		Prison prison = cell.getPrison();
 		
+		// The logic
 		prison.addCell(cell);
 		
+		// Messages
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " created the cell \"" + cell.getName() + "\" for \"" + prison.getName() + "\" prison.");
 		MessageDispatcher.sendMessage(sourcePlayer, "The cell " + Colorise.entity(cell.getName()) + " has been created for " + Colorise.entity(prison.getName()) + " prison.");
+		
+		Law.save();
+	}
+	
+	/**
+	 * Called when a player deletes a prison cell.
+	 * 
+	 * @param event The {@link LawPrisonCellDeleteEvent} instance
+	 */
+	public void onPrisonCellDelete(LawPrisonCellDeleteEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		Player sourcePlayer = event.getSourcePlayer();
+		PrisonCell cell = event.getPrisonCell();
+		Prison prison = cell.getPrison();
+		
+		// The logic
+		prison.removeCell(cell.getName());
+		
+		// Messages
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " deleted the cell \"" + cell.getName() + "\" for \"" + prison.getName() + "\" prison");
+		MessageDispatcher.sendMessage(sourcePlayer, "The cell " + Colorise.entity(cell.getName()) + " has been deleted from " + Colorise.entity(prison.getName()) + " prison.");
 		
 		Law.save();
 	}

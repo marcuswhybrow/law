@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law.commands.prison.cell;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCellDeleteEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
@@ -65,16 +66,12 @@ public class CommandLawPrisonCellDelete extends Command {
 			return PRISON_CELL_HAS_PRISONERS;
 		}
 		
-		selectedPrison.removeCell(cellName);
-		Law.get().save();
-		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " deleted the cell \"" + existingCell.getName() + "\" for \"" + selectedPrison.getName() + "\" prison");
-		MessageDispatcher.sendMessage(player, "The cell " + Colorise.entity(existingCell.getName()) + " has been deleted from " + Colorise.entity(selectedPrison.getName()) + " prison.");
+		Law.fireEvent(new LawPrisonCellDeleteEvent(player, existingCell));
 	}
 
 	@Override
