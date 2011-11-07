@@ -36,10 +36,10 @@ public class CommandLawPrisonList extends Command {
 		
 		Collection<Prison> prisons = lawWorld.getPrisons();
 		if (prisons.size() == 0) {
-			MessageDispatcher.sendMessageWithoutPrefix(sender, "  There are no prisons yet. Use " + Colorise.command("/law prison create <prison-name>") + " to get started.");
+			MessageDispatcher.sendMessageWithoutPrefix(sender, "  There are no prisons yet. Use " + Colorise.command(CommandLawPrisonCreate.DEFINITION) + " to get started.");
 		}
 		
-		for (Prison prison : lawWorld.getPrisons()) {
+		for (Prison prison : prisons) {
 			if (prison == selectedPrison) {
 				MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + Colorise.highlight(prison.getName()) + " - " + prison.getPrisoners().size() + " prisoners");
 			} else {

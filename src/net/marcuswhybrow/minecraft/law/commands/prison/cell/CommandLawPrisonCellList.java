@@ -1,5 +1,7 @@
 package net.marcuswhybrow.minecraft.law.commands.prison.cell;
 
+import java.util.Collection;
+
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
@@ -49,7 +51,14 @@ public class CommandLawPrisonCellList extends Command {
 		}
 		
 		MessageDispatcher.sendMessage(player, "Cell list for " + Colorise.entity(selectedPrison.getName()) + " prison:");
-		for (PrisonCell cell : selectedPrison.getCells()) {
+		
+		Collection<PrisonCell> cells = selectedPrison.getCells();
+		
+		if (cells.size() == 0) {
+			MessageDispatcher.sendMessageWithoutPrefix(sender, "  There are no cells yet. Use " + Colorise.command(CommandLawPrisonCellCreate.DEFINITION) + " to get started.");
+		}
+		
+		for (PrisonCell cell : cells) {
 			MessageDispatcher.sendMessageWithoutPrefix(player, "  " + cell.getName() + " - " + cell.getPrisoners().size() + " prisoners");
 		}
 		
