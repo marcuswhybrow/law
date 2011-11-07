@@ -4,11 +4,9 @@ import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 import org.bukkit.entity.Player;
 
-public class LawFreeEvent extends LawEvent {
+public class LawFreeEvent extends LawCommandEvent {
 	private static final long serialVersionUID = 2960186025135779032L;
 	
-	/** The player which freed the target player. */
-	private Player sourcePlayer;
 	/** The name of the target player which will be freed. */
 	private String targetPlayerName;
 	/** The prison cell which the target player will be freed from. */
@@ -20,20 +18,6 @@ public class LawFreeEvent extends LawEvent {
 		this.setSourcePlayer(sourcePlayer);
 		this.setTargetPlayerName(targetPlayerName);
 		this.setPrisonCell(prisonCell);
-	}
-
-	/**
-	 * @return the sourcePlayer
-	 */
-	public Player getSourcePlayer() {
-		return sourcePlayer;
-	}
-
-	/**
-	 * @param sourcePlayer the sourcePlayer to set
-	 */
-	public void setSourcePlayer(Player sourcePlayer) {
-		this.sourcePlayer = sourcePlayer;
 	}
 
 	/**

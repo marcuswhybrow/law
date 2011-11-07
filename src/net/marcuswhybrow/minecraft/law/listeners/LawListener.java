@@ -228,7 +228,7 @@ public class LawListener extends CustomEventListener implements Listener {
 		}
 		
 		Player sourcePlayer = event.getSourcePlayer();
-		Prison createdPrison = event.getCreatedPrison();
+		Prison createdPrison = event.getPrison();
 		LawWorld lawWorld = createdPrison.getLawWorld();
 		
 		// The logic

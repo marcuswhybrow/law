@@ -15,12 +15,11 @@ import org.bukkit.entity.Player;
  * @author Marcus Whybrow
  *
  */
-public class LawImprisonEvent extends LawEvent {
+public class LawImprisonEvent extends LawCommandEvent {
 	private static final long serialVersionUID = -6159307465018927999L;
+	
 	/** The name of the player that is being imprisoned. */
 	private String targetPlayerName;
-	/** The player that imprisoned the target player. */
-	private Player sourcePlayer;
 	/** The prison cell that the target player is imprisoned within. */
 	private PrisonCell prisonCell;
 
@@ -38,14 +37,6 @@ public class LawImprisonEvent extends LawEvent {
 
 	public void setTargetPlayerName(String targetPlayerName) {
 		this.targetPlayerName = targetPlayerName;
-	}
-
-	public Player getSourcePlayer() {
-		return sourcePlayer;
-	}
-
-	public void setSourcePlayer(Player sourcePlayer) {
-		this.sourcePlayer = sourcePlayer;
 	}
 
 	public PrisonCell getPrisonCell() {
