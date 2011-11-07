@@ -105,7 +105,6 @@ public class LawListener extends CustomEventListener implements Listener {
 		
 		// Imprison the player
 		Law.imprisonPlayer(targetPlayerName, cell);
-		Law.save();
 		
 		// If the player is online, secure them in the prison
 		Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
@@ -118,6 +117,8 @@ public class LawListener extends CustomEventListener implements Listener {
 		
 		// Console message
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " imprisoned \"" + targetPlayerName + "\" in \"" + cell.getPrison().getName() + "\" prison");
+		
+		Law.save();
 	}
 	
 	/**
@@ -140,11 +141,12 @@ public class LawListener extends CustomEventListener implements Listener {
 		
 		// Completes the imprisonment of this player in their cell
 		cell.securePrisoner(targetPlayer.getName());
-		Law.save();
 		
 		// Messages
 		MessageDispatcher.broadcast(Colorise.entity(targetPlayer.getName()) + " has been " + Colorise.action("imprisoned") + " in " + Colorise.entity(cell.getPrison().getName()) + " prison.", "law.broadcasts.imprison");
 		MessageDispatcher.sendMessage(targetPlayer, "You have been imprisoned. Your inventory will be returned when you are freed.");
+		
+		Law.save();
 	}
 	
 	/**
@@ -167,7 +169,6 @@ public class LawListener extends CustomEventListener implements Listener {
 		PrisonCell cell = event.getPrisonCell();
 		
 		Law.freePlayer(targetPlayerName, cell);
-		Law.save();
 		
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " freed \"" + targetPlayerName + "\" from \"" + cell.getPrison().getName() + "\" prison");
 		
@@ -183,6 +184,8 @@ public class LawListener extends CustomEventListener implements Listener {
 		}
 		
 		MessageDispatcher.sendMessage(sourcePlayer, message);
+		
+		Law.save();
 	}
 	
 	/**
@@ -215,6 +218,8 @@ public class LawListener extends CustomEventListener implements Listener {
 		// Messages
 		MessageDispatcher.broadcast(Colorise.entity(targetPlayer.getName()) + " has been " + Colorise.action("freed") + " from " + Colorise.entity(cell.getPrison().getName()) + " prison.", "law.broadcasts.imprison");
 		MessageDispatcher.sendMessage(targetPlayer, "You have been freed from prison.");
+		
+		Law.save();
 	}
 	
 	/**

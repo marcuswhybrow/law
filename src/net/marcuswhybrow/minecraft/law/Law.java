@@ -113,12 +113,18 @@ public class Law {
 		return this.worlds.values();
 	}
 	
-	public static boolean imprisonPlayer(String playerName, PrisonerContainer prisonerContainer) {
-		if (prisonerContainer == null) {
+	public static boolean imprisonPlayer(String playerName, PrisonCell cell) {
+		if (cell == null) {
 			throw new IllegalArgumentException("Prisoner container cannot be null");
 		}
 		
-		if (prisonerContainer.imprisonPlayer(playerName) == false) {
+		// Remove the prisoner from the current cell if necessary
+		PrisonCell currentCell = cell.getPrison().getLawWorld().getPrisonerCell(playerName);
+		if (currentCell != null) {
+			currentCell.removePrisoner(playerName);
+		}
+		
+		if (cell.imprisonPlayer(playerName) == false) {
 			return false;
 		}
 		
