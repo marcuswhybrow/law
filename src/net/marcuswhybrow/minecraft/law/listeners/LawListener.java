@@ -11,6 +11,7 @@ import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
 import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCellCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonSelectEvent;
@@ -66,6 +67,9 @@ public class LawListener extends CustomEventListener implements Listener {
 			
 		} else if (event instanceof LawPrisonSetExitEvent) {
 			this.onPrisonSetExit((LawPrisonSetExitEvent) event);
+			
+		} else if (event instanceof LawPrisonCellCreateEvent) {
+			this.onPrisonCellCreate((LawPrisonCellCreateEvent) event);
 			
 		}
 		
@@ -323,6 +327,23 @@ public class LawListener extends CustomEventListener implements Listener {
 		// Messages
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " set the exit point location for prison \"" + prison.getName() + "\"");
 		MessageDispatcher.sendMessage(sourcePlayer, "The " + Colorise.entity("exit point") + " for " + Colorise.entity(prison.getName()) + " prison has been set.");
+		
+		Law.save();
+	}
+	
+	public void onPrisonCellCreate(LawPrisonCellCreateEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		Player sourcePlayer = event.getSourcePlayer();
+		PrisonCell cell = event.getPrisonCell();
+		Prison prison = cell.getPrison();
+		
+		prison.addCell(cell);
+		
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " created the cell \"" + cell.getName() + "\" for \"" + prison.getName() + "\" prison.");
+		MessageDispatcher.sendMessage(sourcePlayer, "The cell " + Colorise.entity(cell.getName()) + " has been created for " + Colorise.entity(prison.getName()) + " prison.");
 		
 		Law.save();
 	}

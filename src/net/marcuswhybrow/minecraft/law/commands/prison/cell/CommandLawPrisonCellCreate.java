@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law.commands.prison.cell;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCellCreateEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
@@ -60,16 +61,13 @@ public class CommandLawPrisonCellCreate extends Command {
 		}
 		
 		createdCell = new PrisonCell(selectedPrison, cellName, player.getLocation());
-		selectedPrison.addCell(createdCell);
-		Law.get().save();
 		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " created the cell \"" + createdCell.getName() + "\" for \"" + selectedPrison.getName() + "\" prison.");
-		MessageDispatcher.sendMessage(player, "The cell " + Colorise.entity(createdCell.getName()) + " has been created for " + Colorise.entity(selectedPrison.getName()) + " prison.");
+		Law.fireEvent(new LawPrisonCellCreateEvent(player, createdCell));
 	}
 
 	@Override
