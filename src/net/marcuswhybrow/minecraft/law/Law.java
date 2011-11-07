@@ -5,15 +5,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 
 import net.marcuswhybrow.minecraft.law.events.LawEvent;
-import net.marcuswhybrow.minecraft.law.interfaces.ImprisonmentListener;
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonCellListener;
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonListener;
 import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
@@ -37,21 +32,9 @@ public class Law {
 	private Plugin plugin = null;
 	private static Law self = null;
 	private HashMap<String, LawWorld> worlds;
-	private enum State {SETUP, ACTIVE};
-	private State state;
-	/** The list of imprisonment listeners to notify of imprisonment events. */
-	private List<ImprisonmentListener> imprisonmentListeners;
-	/** The list of prison listeners to notify of prison events. */
-	private List<PrisonListener> prisonListeners;
-	/** The list of prison cell listeners to notify of prison cell events. */
-	private List<PrisonCellListener> prisonCellListeners;
 	
 	private Law() {
 		worlds = new HashMap<String, LawWorld>();
-		this.imprisonmentListeners = new ArrayList<ImprisonmentListener>();
-		this.prisonListeners = new ArrayList<PrisonListener>();
-		this.prisonCellListeners = new ArrayList<PrisonCellListener>();
-		state = State.SETUP;
 	}
 	
 	public static Law get() {
@@ -59,10 +42,6 @@ public class Law {
 			self = new Law();
 		}
 		return self;
-	}
-	
-	public boolean isActive() {
-		return state == State.ACTIVE;
 	}
 	
 	public void setPlugin(Plugin plugin) {
@@ -84,13 +63,6 @@ public class Law {
 				this.worlds.put(world.getName(), new LawWorld(world));
 			}
 		}
-		
-		// TODO remove this mechanism
-		this.setActive();
-	}
-	
-	public void setActive() {
-		this.state = State.ACTIVE;
 	}
 	
 	public LawWorld getLawWorld(String name) {
@@ -203,91 +175,6 @@ public class Law {
 			MessageDispatcher.consoleWarning("Could not read state from disk.");
 			MessageDispatcher.consoleWarning(Utils.getStackTraceAsString(e));
 		}
-	}
-	
-	/**
-	 * Adds an ImprisonmentListener to be notified of imprisonment events.
-	 * 
-	 * @param listener The ImprisonmentListener to be added 
-	 */
-	public void addImprisonmentListener(ImprisonmentListener listener) {
-		this.imprisonmentListeners.add(listener);
-	}
-	
-	/**
-	 * Removes and ImprisonmentListener from being notified of
-	 * imprisonment events.
-	 * 
-	 * @param listener The ImprisomentListener to be removed
-	 */
-	public void removeImprisonmentListener(ImprisonmentListener listener) {
-		this.imprisonmentListeners.remove(listener);
-	}
-	
-	/**
-	 * Get the list of imprisonment listeners.
-	 * 
-	 * @return The list of registered imprisonment listeners
-	 */
-	public List<ImprisonmentListener> getImprisonmentListeners() {
-		return this.imprisonmentListeners;
-	}
-	
-	/**
-	 * Adds an PrisonListener to be notified of prison events.
-	 * 
-	 * @param listener The PrisonListener to be added 
-	 */
-	public void addPrisonListener(PrisonListener listener) {
-		this.prisonListeners.add(listener);
-	}
-	
-	/**
-	 * Removes and PrisonListener from being notified of
-	 * prison events.
-	 * 
-	 * @param listener The PrisonListener to be removed
-	 */
-	public void removePrisonListener(PrisonListener listener) {
-		this.prisonListeners.remove(listener);
-	}
-	
-	/**
-	 * Get the list of prison listeners.
-	 * 
-	 * @return The list of registered prison listeners
-	 */
-	public List<PrisonListener> getPrisonListeners() {
-		return this.prisonListeners;
-	}
-	
-	/**
-	 * Adds an PrisonCellListener to be notified of prison
-	 * cell events.
-	 * 
-	 * @param listener The PrisonCellListener to be added 
-	 */
-	public void addPrisonCellListener(PrisonCellListener listener) {
-		this.prisonCellListeners.add(listener);
-	}
-	
-	/**
-	 * Removes and PrisonCellListener from being notified of
-	 * prison cell events.
-	 * 
-	 * @param listener The PrisonCellListener to be removed
-	 */
-	public void removePrisonCellListener(PrisonCellListener listener) {
-		this.prisonCellListeners.remove(listener);
-	}
-	
-	/**
-	 * Get the list of prison cell listeners.
-	 * 
-	 * @return The list of registered prison cell listeners.
-	 */
-	public List<PrisonCellListener> getCellListeners() {
-		return this.prisonCellListeners;
 	}
 	
 	/**

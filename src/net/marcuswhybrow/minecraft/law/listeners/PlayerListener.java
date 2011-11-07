@@ -1,6 +1,7 @@
 package net.marcuswhybrow.minecraft.law.listeners;
 
-import net.marcuswhybrow.minecraft.law.interfaces.ImprisonmentListener;
+import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
+import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.Settings;
@@ -30,17 +31,13 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 		if (lawWorld.hasUnsecuredPrisoner(player.getName())) {
 			PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
 			if (cell != null) {
-				for (ImprisonmentListener listener : Law.get().getImprisonmentListeners()) {
-					listener.onImprison(player, cell);
-				}
+				Law.fireEvent(new LawImprisonSecureEvent(player, cell));
 			}
 		}
 		
 		if (lawWorld.hasUnreleasedPrisoner(player.getName())) {
 			PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
-			for (ImprisonmentListener listener : Law.get().getImprisonmentListeners()) {
-				listener.onFree(player, cell);
-			}
+			Law.fireEvent(new LawFreeReleaseEvent(player, cell));
 		}
 	}
 	

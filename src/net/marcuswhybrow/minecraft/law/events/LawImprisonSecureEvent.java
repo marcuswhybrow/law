@@ -20,6 +20,10 @@ public class LawImprisonSecureEvent extends LawCommandEvent {
 		this.setPrisonCell(prisonCell);
 	}
 	
+	public LawImprisonSecureEvent(final Player targetPlayer, final PrisonCell prisonCell) {
+		this(null, targetPlayer, prisonCell);
+	}
+	
 	/**
 	 * @return the targetPlayer
 	 */

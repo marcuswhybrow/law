@@ -41,7 +41,6 @@ public class LawWorld extends Entity implements Serializable {
 	
 	public void deletePrison(Prison prison) {
 		prisons.remove(prison.getName().toLowerCase());
-		prison.delete();
 		
 		// If there is only one prison remaining
 		if (prisons.size() == 1) {

@@ -13,14 +13,14 @@ public abstract class LawCommandEvent extends LawEvent {
 	}
 
 	/**
-	 * @return the sourcePlayer
+	 * @return the sourcePlayer or null if event was not directly instigated by a player
 	 */
 	public Player getSourcePlayer() {
 		return sourcePlayer;
 	}
 
 	/**
-	 * @param sourcePlayer the sourcePlayer to set
+	 * @param sourcePlayer the sourcePlayer to set or null if not instigated by a player
 	 */
 	public void setSourcePlayer(Player sourcePlayer) {
 		this.sourcePlayer = sourcePlayer;

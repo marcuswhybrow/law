@@ -3,7 +3,6 @@ package net.marcuswhybrow.minecraft.law.prison;
 import java.io.Serializable;
 
 import net.marcuswhybrow.minecraft.law.Entity;
-import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.serializable.SerializableLocation;
 
 import org.bukkit.Location;
@@ -48,7 +47,7 @@ public class PrisonCell extends Entity implements Serializable {
 	
 	@Override
 	public boolean imprisonPlayer(String playerName) {
-		if (Law.get().isActive() && !getPrison().isOperational()) {
+		if (getPrison().isOperational() == false) {
 			return false;
 		}
 		

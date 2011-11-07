@@ -19,6 +19,10 @@ public class LawFreeReleaseEvent extends LawCommandEvent {
 		this.setTargetPlayer(targetPlayer);
 		this.setPrisonCell(prisonCell);
 	}
+	
+	public LawFreeReleaseEvent(final Player targetPlayer, final PrisonCell prisonCell) {
+		this(null, targetPlayer, prisonCell);
+	}
 
 	/**
 	 * @return the targetPlayer

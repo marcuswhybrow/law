@@ -2,7 +2,6 @@ package net.marcuswhybrow.minecraft.law;
 
 import net.marcuswhybrow.minecraft.law.listeners.BlockListener;
 import net.marcuswhybrow.minecraft.law.listeners.EntityListener;
-import net.marcuswhybrow.minecraft.law.listeners.ImprisonmentListener;
 import net.marcuswhybrow.minecraft.law.listeners.LawListener;
 import net.marcuswhybrow.minecraft.law.listeners.PlayerListener;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
@@ -43,9 +42,6 @@ public class Plugin extends JavaPlugin {
 		
 		// Custom events
 		pluginManager.registerEvent(Event.Type.CUSTOM_EVENT, lawListener, Event.Priority.Lowest, this);
-		
-		// Setup custom event listeners
-		law.addImprisonmentListener(new ImprisonmentListener());
 		
 		// Setup the Law instance
 		law.setup();

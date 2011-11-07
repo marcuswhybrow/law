@@ -5,9 +5,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import net.marcuswhybrow.minecraft.law.Entity;
-import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonListener;
 import net.marcuswhybrow.minecraft.law.serializable.SerializableLocation;
 import net.marcuswhybrow.minecraft.law.utilities.Validate;
 
@@ -30,10 +28,6 @@ public class Prison extends Entity implements Serializable {
 		
 		setName(name);
 		setParentPrisonerContainer(this.lawWorld);
-		
-		for (PrisonListener listener : Law.get().getPrisonListeners()) {
-			listener.onPrisonCreate(this);
-		}
 	}
 	
 	@Override
@@ -49,10 +43,6 @@ public class Prison extends Entity implements Serializable {
 	 */
 	public void setExitPoint(Location location) {
 		this.exitPoint = new SerializableLocation(location);
-		
-		for (PrisonListener listener : Law.get().getPrisonListeners()) {
-			listener.onPrisonSetExit(this);
-		}
 	}
 	
 	public void addCell(PrisonCell cell) {
@@ -145,11 +135,5 @@ public class Prison extends Entity implements Serializable {
 			return this.getName() == other.getName() && this.getLawWorld() == other.getLawWorld();
 		}
 		return false;
-	}
-	
-	public void delete() {
-		for (PrisonListener listener : Law.get().getPrisonListeners()) {
-			listener.onPrisonDelete(this);
-		}
 	}
 }
