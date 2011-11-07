@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law.commands.prison;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonSetExitEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
@@ -46,7 +47,7 @@ public class CommandLawPrisonSelect extends Command {
 
 	@Override
 	public void onSuccess() {
-		
+		Law.fireEvent(new LawPrisonSetExitEvent(player, selectedPrison));
 	}
 
 	@Override

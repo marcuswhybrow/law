@@ -3,9 +3,9 @@ package net.marcuswhybrow.minecraft.law.commands.prison;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonSetExitEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
-import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.Commands;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
@@ -47,16 +47,12 @@ public class CommandLawPrisonSetExit extends Command {
 			}
 		}
 		
-		prison.setExitPoint(player.getLocation());
-		Law.get().save();
-		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " set the exit point location for prison \"" + prison.getName() + "\"");
-		MessageDispatcher.sendMessage(player, "The " + Colorise.entity("exit point") + " for " + Colorise.entity(prison.getName()) + " prison has been set.");
+		Law.fireEvent(new LawPrisonSetExitEvent(player, prison));
 	}
 
 	@Override

@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonListener;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 
 import org.bukkit.Bukkit;

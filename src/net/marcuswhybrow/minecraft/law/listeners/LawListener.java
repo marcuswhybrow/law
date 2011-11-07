@@ -14,6 +14,7 @@ import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonSelectEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonSetExitEvent;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
@@ -62,6 +63,10 @@ public class LawListener extends CustomEventListener implements Listener {
 			
 		} else if (event instanceof LawPrisonSelectEvent) {
 			this.onPrisonSelect((LawPrisonSelectEvent) event);
+			
+		} else if (event instanceof LawPrisonSetExitEvent) {
+			this.onPrisonSetExit((LawPrisonSetExitEvent) event);
+			
 		}
 		
 		super.onCustomEvent(event);
@@ -295,6 +300,29 @@ public class LawListener extends CustomEventListener implements Listener {
 		
 		// Messages
 		MessageDispatcher.sendMessage(sourcePlayer, "The prison " + Colorise.entity(prison.getName()) + " has been selected. All prison commands now apply to this prison.");
+		
+		Law.save();
+	}
+	
+	/**
+	 * Called when a player sets the exit point for a prison.
+	 * 
+	 * @param event The {@link LawPrisonSetExitEvent} instance
+	 */
+	public void onPrisonSetExit(LawPrisonSetExitEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		Player sourcePlayer = event.getSourcePlayer();
+		Prison prison = event.getPrison();
+		
+		// The Logic
+		prison.setExitPoint(sourcePlayer.getLocation());
+		
+		// Messages
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " set the exit point location for prison \"" + prison.getName() + "\"");
+		MessageDispatcher.sendMessage(sourcePlayer, "The " + Colorise.entity("exit point") + " for " + Colorise.entity(prison.getName()) + " prison has been set.");
 		
 		Law.save();
 	}
