@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law.commands.prison.cell;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCellMoveEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
@@ -60,16 +61,12 @@ public class CommandLawPrisonCellMove extends Command {
 			return PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME;
 		}
 		
-		existingCell.setLocation(player.getLocation());
-		Law.get().save();
-		
 		return SUCCESS;
 	}
 
 	@Override
 	public void onSuccess() {
-		MessageDispatcher.consoleInfo(player.getName() + " moved the cell \"" + existingCell.getName() + "\" belonging to \"" + selectedPrison.getName() + "\" prison");
-		MessageDispatcher.sendMessage(player, "The cell " + Colorise.entity(existingCell.getName()) + " has been moved, belonging to " + Colorise.entity(selectedPrison.getName()) + " prison.");
+		Law.fireEvent(new LawPrisonCellMoveEvent(player, existingCell));
 	}
 
 	@Override

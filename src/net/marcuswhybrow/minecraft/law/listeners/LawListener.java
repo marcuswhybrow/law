@@ -13,6 +13,7 @@ import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCellCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCellDeleteEvent;
+import net.marcuswhybrow.minecraft.law.events.LawPrisonCellMoveEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonDeleteEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonSelectEvent;
@@ -74,6 +75,10 @@ public class LawListener extends CustomEventListener implements Listener {
 			
 		} else if (event instanceof LawPrisonCellDeleteEvent) {
 			this.onPrisonCellDelete((LawPrisonCellDeleteEvent) event);
+			
+		} else if (event instanceof LawPrisonCellMoveEvent) {
+			this.onPrisonCellMove((LawPrisonCellMoveEvent) event);
+			
 		}
 		
 		super.onCustomEvent(event);
@@ -378,6 +383,30 @@ public class LawListener extends CustomEventListener implements Listener {
 		// Messages
 		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " deleted the cell \"" + cell.getName() + "\" for \"" + prison.getName() + "\" prison");
 		MessageDispatcher.sendMessage(sourcePlayer, "The cell " + Colorise.entity(cell.getName()) + " has been deleted from " + Colorise.entity(prison.getName()) + " prison.");
+		
+		Law.save();
+	}
+	
+	/**
+	 * Called when a player moves a prison cell to a new location.
+	 * 
+	 * @param event The {@link LawPrisonCellMoveEvent} instance
+	 */
+	public void onPrisonCellMove(LawPrisonCellMoveEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		Player sourcePlayer = event.getSourcePlayer();
+		PrisonCell cell = event.getPrisonCell();
+		Prison prison = cell.getPrison();
+		
+		// The logic
+		cell.setLocation(sourcePlayer.getLocation());
+		
+		// Messages
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " moved the cell \"" + cell.getName() + "\" belonging to \"" + prison.getName() + "\" prison");
+		MessageDispatcher.sendMessage(sourcePlayer, "The cell " + Colorise.entity(cell.getName()) + " has been moved, belonging to " + Colorise.entity(prison.getName()) + " prison.");
 		
 		Law.save();
 	}
