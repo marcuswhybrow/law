@@ -2,15 +2,14 @@ package net.marcuswhybrow.minecraft.law.listeners;
 
 import java.util.Collection;
 
-import net.marcuswhybrow.minecraft.law.InventoryManager;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.prison.CommandLawPrisonCreate;
 import net.marcuswhybrow.minecraft.law.commands.prison.CommandLawPrisonSelect;
+import net.marcuswhybrow.minecraft.law.events.LawDetainEndEvent;
 import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
-import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
+import net.marcuswhybrow.minecraft.law.events.LawDetainStartEvent;
 import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
-import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCellCreateEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCellDeleteEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonCellMoveEvent;
@@ -20,11 +19,10 @@ import net.marcuswhybrow.minecraft.law.events.LawPrisonSelectEvent;
 import net.marcuswhybrow.minecraft.law.events.LawPrisonSetExitEvent;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.CustomEventListener;
 import org.bukkit.event.Event;
@@ -46,17 +44,17 @@ public class LawListener extends CustomEventListener implements Listener {
 	@Override
 	public void onCustomEvent(Event event) {
 		
-		if (event instanceof LawImprisonEvent) {
+		if (event instanceof LawDetainStartEvent) {
+			this.onDetainStart((LawDetainStartEvent) event);
+			
+		} else if (event instanceof LawImprisonEvent) {
 			this.onImprison((LawImprisonEvent) event);
 			
-		} else if (event instanceof LawImprisonSecureEvent) {
-			this.onImprisonSecure((LawImprisonSecureEvent) event);
+		} else if (event instanceof LawDetainEndEvent) {
+			this.onDetainEnd((LawDetainEndEvent) event);
 			
 		} else if (event instanceof LawFreeEvent) {
 			this.onFree((LawFreeEvent) event);
-			
-		} else if (event instanceof LawFreeReleaseEvent) {
-			this.onFreeRelease((LawFreeReleaseEvent) event);
 			
 		} else if (event instanceof LawPrisonCreateEvent) {
 			this.onPrisonCreate((LawPrisonCreateEvent) event);
@@ -85,12 +83,49 @@ public class LawListener extends CustomEventListener implements Listener {
 	}
 	
 	/**
-	 * Called when a player is imprisoned, before the plugin
-	 * checks whether the player is online, and thus before the
-	 * in-game player is effected in any way.
+	 * Called when a playeris detained by another player.
+	 * Remember that the detained player may not be online
+	 * at this point.
 	 * 
-	 * See {@link #onImprisonSecure(LawImprisonSecureEvent)} for
+	 * See {@link #onImprison(LawImprisonEvent)} for
 	 * when an in-game player is actually moved into the prison.
+	 * 
+	 * @param event The {@link LawDetainStartEvent} instance
+	 */
+	public void onDetainStart(LawDetainStartEvent event) {
+		if (event.isCancelled()) {
+			return;
+		}
+		
+		PrisonDetainee detainee = event.getDetainee();
+		Player sourcePlayer = event.getSourcePlayer();
+		PrisonCell cell = detainee.getPrisonCell();
+		String detaineeName = detainee.getName();
+		String prisonName = cell.getPrison().getName();
+		
+		// The logic
+		boolean detentionWasStarted = detainee.startDetention();
+		
+		if (detentionWasStarted == false)
+			return;
+		
+		boolean playerIsOnline = detainee.imprisonInGamePlayer();
+		
+		// Messages
+		if (playerIsOnline) {
+			MessageDispatcher.sendMessage(sourcePlayer, "Imprisoned " + Colorise.entity(detaineeName) + " in " + Colorise.entity(prisonName) + " prison.");
+		} else {
+			MessageDispatcher.sendMessage(sourcePlayer, "Imprisoned " + Colorise.entity(detaineeName) + " in " + Colorise.entity(prisonName) + " prison. This player is offline but will be imprisoned when they return.");
+		}
+		
+		// Console message
+		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " imprisoned \"" + detaineeName + "\" in \"" + prisonName + "\" prison");
+		
+		Law.save();
+	}
+	
+	/**
+	 * Called when an in-game player is literally imprisoned with a prison cell.
 	 * 
 	 * @param event The {@link LawImprisonEvent} instance
 	 */
@@ -99,124 +134,92 @@ public class LawListener extends CustomEventListener implements Listener {
 			return;
 		}
 		
-		String targetPlayerName = event.getTargetPlayerName();
-		PrisonCell cell = event.getPrisonCell();
-		Player sourcePlayer = event.getSourcePlayer();
+		PrisonDetainee detainee = event.getDetainee();
+		PrisonCell cell = detainee.getPrisonCell();
+		String detaineeName = detainee.getName();
 		
-		// Imprison the player
-		Law.imprisonPlayer(targetPlayerName, cell);
+		// The logic
+		boolean playerWasImprisoned = detainee.imprisonInGamePlayer();
 		
-		// If the player is online, secure them in the prison
-		Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
-		if (targetPlayer != null) {
-			Law.fireEvent(new LawImprisonSecureEvent(sourcePlayer, targetPlayer, cell));
-			MessageDispatcher.sendMessage(sourcePlayer, "Imprisoned " + Colorise.entity(targetPlayerName) + " in " + Colorise.entity(cell.getPrison().getName()) + " prison.");
-		} else {
-			MessageDispatcher.sendMessage(sourcePlayer, "Imprisoned " + Colorise.entity(targetPlayerName) + " in " + Colorise.entity(cell.getPrison().getName()) + " prison. This player is offline but will be imprisoned when they return.");
-		}
+		if (playerWasImprisoned == false)
+			return;
 		
-		// Console message
-		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " imprisoned \"" + targetPlayerName + "\" in \"" + cell.getPrison().getName() + "\" prison");
+		// Messages
+		MessageDispatcher.broadcast(Colorise.entity(detaineeName) + " has been " + Colorise.action("imprisoned") + " in " + Colorise.entity(cell.getPrison().getName()) + " prison.", "law.broadcasts.imprison");
+		MessageDispatcher.sendMessage(detainee.getPlayer(), "You have been imprisoned. Your inventory will be returned when you are freed.");
 		
 		Law.save();
 	}
 	
 	/**
-	 * Called when an in-game player is literally imprisoned with a prison cell.
+	 * Called when a player's detention is ended by another
+	 * player. Remember that the player whose detention has just
+	 * ended may not be online.
 	 * 
-	 * @param event The {@link LawImprisonSecureEvent} instance
+	 * See {@link #onFree(LawFreeEvent)} for when an
+	 * in-game player is actually moved out of their prison cell.
+	 * 
+	 * @param event The {@link LawDetainEndEvent} instance
 	 */
-	public void onImprisonSecure(LawImprisonSecureEvent event) {
+	public void onDetainEnd(LawDetainEndEvent event) {
 		if (event.isCancelled()) {
 			return;
 		}
 		
-		PrisonCell cell = event.getPrisonCell();
-		Player targetPlayer = event.getTargetPlayer();
+		PrisonDetainee detainee = event.getDetainee();
+		String detaineeName = detainee.getName();
+		String prisonName = detainee.getPrisonCell().getPrison().getName();
+		// source player can be null for this event
+		Player sourcePlayer = event.getSourcePlayer();
 		
-		// Player changes
-		targetPlayer.teleport(cell.getLocation());
-		InventoryManager.confiscate(targetPlayer);
-		targetPlayer.setSleepingIgnored(true);
+		boolean detentionWasEnded = detainee.endDetention();
 		
-		// Completes the imprisonment of this player in their cell
-		cell.securePrisoner(targetPlayer.getName());
+		if (detentionWasEnded == false)
+			return;
 		
-		// Messages
-		MessageDispatcher.broadcast(Colorise.entity(targetPlayer.getName()) + " has been " + Colorise.action("imprisoned") + " in " + Colorise.entity(cell.getPrison().getName()) + " prison.", "law.broadcasts.imprison");
-		MessageDispatcher.sendMessage(targetPlayer, "You have been imprisoned. Your inventory will be returned when you are freed.");
+		boolean playerIsOnline = detainee.freeInGamePlayer();
+		
+		StringBuilder message = new StringBuilder(Colorise.entity(detaineeName)).append(" was ").append(Colorise.action("freed")).append(" from ").append(Colorise.entity(prisonName)).append(" prison");
+		
+		if (sourcePlayer != null) {
+			message.append(" early by ").append(Colorise.entity(sourcePlayer.getName()));
+		} else {
+			message.append(" after serving their sentence.");
+		}
+		
+		MessageDispatcher.broadcast(message.toString(), "law.broadcasts.free");
+		
+		if (sourcePlayer != null && playerIsOnline == false) {
+			MessageDispatcher.sendMessage(sourcePlayer, new StringBuilder(Colorise.entity(detaineeName)).append(" will be free when they next join.").toString());
+		}
 		
 		Law.save();
 	}
 	
 	/**
-	 * Called when a player is freed, before the plugin
-	 * checks whether the player is online, and thus before the
-	 * in-game player is effected in any way.
+	 * Called when an in-game player is freed from a prison cell.
 	 * 
-	 * See {@link #onFreeRelease(LawFreeReleaseEvent)} for when an
-	 * in-game player is actually moved out of their prison cell.
-	 * 
-	 * @param event The {@link LawFreeEvent} insance
+	 * @param event The {@link LawFreeEvent} instance
 	 */
 	public void onFree(LawFreeEvent event) {
 		if (event.isCancelled()) {
 			return;
 		}
 		
-		Player sourcePlayer = event.getSourcePlayer();
-		String targetPlayerName = event.getTargetPlayerName();
-		PrisonCell cell = event.getPrisonCell();
+		PrisonDetainee detainee = event.getDetainee();
+		Player targetPlayer = detainee.getPlayer();
+		PrisonCell cell = detainee.getPrisonCell();
+		String detaineeName = detainee.getName();
+		String prisonName = cell.getPrison().getName();
 		
-		Law.freePlayer(targetPlayerName, cell);
+		// The logic
+		boolean playerWasFreed = detainee.freeInGamePlayer();
 		
-		MessageDispatcher.consoleInfo(sourcePlayer.getName() + " freed \"" + targetPlayerName + "\" from \"" + cell.getPrison().getName() + "\" prison");
-		
-		String message = "Freed " + Colorise.entity(targetPlayerName) + " from " + Colorise.entity(cell.getPrison().getName()) + " prison.";
-		
-		Player targetPlayer = Bukkit.getPlayerExact(targetPlayerName);
-		
-		if (targetPlayer != null) {
-			// The player is online
-			message += " This player is offline but will be free when they return.";
-			
-			Law.fireEvent(new LawFreeReleaseEvent(sourcePlayer, targetPlayer, cell));
-		}
-		
-		MessageDispatcher.sendMessage(sourcePlayer, message);
-		
-		Law.save();
-	}
-	
-	/**
-	 * Called when a player is literally freed from a prison cell.
-	 * 
-	 * @param event The {@link LawFreeReleaseEvent} instance
-	 */
-	public void onFreeRelease(LawFreeReleaseEvent event) {
-		if (event.isCancelled()) {
+		if (playerWasFreed == false)
 			return;
-		}
-		
-		PrisonCell cell = event.getPrisonCell();
-		Player targetPlayer = event.getTargetPlayer();
-		
-		// Get the best location
-		Location location = cell.getPrison().getExitPoint();
-		if (location == null) {
-			location = cell.getPrison().getLawWorld().getBukkitWorld().getSpawnLocation();
-		}
-		
-		// Effect the player
-		targetPlayer.teleport(location);
-		InventoryManager.restore(targetPlayer);
-		targetPlayer.setSleepingIgnored(false);
-		
-		// Completes the removal of this player from the prison
-		cell.removePrisoner(targetPlayer.getName());
 		
 		// Messages
-		MessageDispatcher.broadcast(Colorise.entity(targetPlayer.getName()) + " has been " + Colorise.action("freed") + " from " + Colorise.entity(cell.getPrison().getName()) + " prison.", "law.broadcasts.imprison");
+		MessageDispatcher.broadcast(Colorise.entity(detaineeName) + " has been " + Colorise.action("freed") + " from " + Colorise.entity(prisonName) + " prison.", "law.broadcasts.imprison");
 		MessageDispatcher.sendMessage(targetPlayer, "You have been freed from prison.");
 		
 		Law.save();

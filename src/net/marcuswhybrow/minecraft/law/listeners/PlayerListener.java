@@ -1,11 +1,11 @@
 package net.marcuswhybrow.minecraft.law.listeners;
 
-import net.marcuswhybrow.minecraft.law.events.LawFreeReleaseEvent;
-import net.marcuswhybrow.minecraft.law.events.LawImprisonSecureEvent;
+import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
+import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.Settings;
-import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
@@ -28,16 +28,16 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 			return;
 		}
 		
-		if (lawWorld.hasUnsecuredPrisoner(player.getName())) {
-			PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
-			if (cell != null) {
-				Law.fireEvent(new LawImprisonSecureEvent(player, cell));
+		PrisonDetainee detainee = lawWorld.getDetainee(player.getName());
+		if (detainee != null) {
+			switch (detainee.getState()) {
+			case TO_BE_FREED:
+				Law.fireEvent(new LawFreeEvent(detainee));
+				break;
+			case TO_BE_IMPRISONED:
+				Law.fireEvent(new LawImprisonEvent(detainee));
+				break;
 			}
-		}
-		
-		if (lawWorld.hasUnreleasedPrisoner(player.getName())) {
-			PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
-			Law.fireEvent(new LawFreeReleaseEvent(player, cell));
 		}
 	}
 	
@@ -79,9 +79,11 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		Player player = event.getPlayer();
 		LawWorld lawWorld = Law.get().getLawWorldForPlayer(player);
-		PrisonCell cell = lawWorld.getPrisonerCell(player.getName());
-		if (cell != null) {
-			event.setRespawnLocation(cell.getLocation());
+		
+		PrisonDetainee detainee = lawWorld.getDetainee(player.getName());
+		
+		if (detainee != null) {
+			event.setRespawnLocation(detainee.getPrisonCell().getLocation());
 		}
 		
 		super.onPlayerRespawn(event);

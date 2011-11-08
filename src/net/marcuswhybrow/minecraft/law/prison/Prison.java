@@ -108,16 +108,6 @@ public class Prison extends Entity implements Serializable {
 	public LawWorld getLawWorld() {
 		return this.lawWorld;
 	}
-
-	@Override
-	public boolean imprisonPlayer(String playerName) {
-		if (this.hasDefaultCell() == false) {
-			return false;
-		}
-		
-		PrisonCell cell = this.getCell(PrisonCell.DEFAULT_NAME);
-		return cell.imprisonPlayer(playerName);
-	}
 	
 	@Override
 	public int hashCode() {

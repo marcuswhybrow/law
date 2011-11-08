@@ -41,9 +41,9 @@ public class CommandLawPrisonList extends Command {
 		
 		for (Prison prison : prisons) {
 			if (prison == selectedPrison) {
-				MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + Colorise.highlight(prison.getName()) + " - " + prison.getPrisoners().size() + " prisoners");
+				MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + Colorise.highlight(prison.getName()) + " - " + prison.getDetainees().size() + " prisoners");
 			} else {
-				MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + prison.getName() + " - " + prison.getPrisoners().size() + " prisoners");
+				MessageDispatcher.sendMessageWithoutPrefix(sender, "  " + prison.getName() + " - " + prison.getDetainees().size() + " prisoners");
 			}
 		}
 		

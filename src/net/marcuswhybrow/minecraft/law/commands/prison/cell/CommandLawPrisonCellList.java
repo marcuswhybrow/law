@@ -59,7 +59,7 @@ public class CommandLawPrisonCellList extends Command {
 		}
 		
 		for (PrisonCell cell : cells) {
-			MessageDispatcher.sendMessageWithoutPrefix(player, "  " + cell.getName() + " - " + cell.getPrisoners().size() + " prisoners");
+			MessageDispatcher.sendMessageWithoutPrefix(player, "  " + cell.getName() + " - " + cell.getDetainees().size() + " prisoners");
 		}
 		
 		return SUCCESS;

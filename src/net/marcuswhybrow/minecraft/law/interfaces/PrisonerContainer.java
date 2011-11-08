@@ -2,70 +2,67 @@ package net.marcuswhybrow.minecraft.law.interfaces;
 
 import java.util.Set;
 
-import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 
 public interface PrisonerContainer {
 	
-	public boolean imprisonPlayer(String playerName);
-	public void imprisonPlayers(Set<String> playerNames);
-	
-	public void freePlayer(String playerName);
-	public void freePlayers(Set<String> playerNames);
-	public void freePlayers();
-	
-	public Set<String> getPrisoners();
-	
+	/**
+	 * Sets the parent container for this container.
+	 * 
+	 * @param prisonerContiainer The parent container
+	 */
 	public void setParentPrisonerContainer(PrisonerContainer prisonerContiainer);
-	public PrisonerContainer getParentPrisonerContainer();
 	
-	public void addChildPrisonerContainer(PrisonerContainer prisonerContiainer);
-	public void removeChildPrisonerContainer(PrisonerContainer prisonerContiainer);
-	public Set<PrisonerContainer> getChildPrisonerContainers();
-	
+	/**
+	 * Gets the parent container for this container.
+	 * 
+	 * @return The parent container
+	 */
+	public PrisonerContainer getParentPrisonerContainer();	
 
 	/**
 	 * Adds a player to the prisoner list of the PrisonerContainer.
-	 * May be called when a player is online or offline.
 	 * 
-	 * @param playerName The name of the player which is imprisoned
-	 * @param cell The PrisonCell in which this player is actually imprisoned within
+	 * @param detainee The detainee to add to this prison
 	 */
-	public void addPrisoner(String playerName, PrisonCell cell);
-	
-	/**
-	 * Transitions a player into the regular prisoners list.
-	 * May only be called when a player is online. This indicates
-	 * that the player has had the in-game modifications applied
-	 * which are required of a prisoner.
-	 * 
-	 * @param playerName The player to effect
-	 */
-	public void securePrisoner(String playerName);
-	
-	/**
-	 * Transitions a player into the "prisoners being released" list.
-	 * May be called when a player is online or offline.
-	 * 
-	 * @param playerName The name of the player to effect
-	 */
-	public void releasePrisoner(String playerName);
+	public void addDetainee(PrisonDetainee detainee);
 	
 	/**
 	 * Removes a player completely from the containers lists.
-	 * May only be called when a player is online. This indicates
-	 * that the player has has the in-game modifications applied
-	 * which are required to restore full funtionality to a once
-	 * imprisoned player.
 	 * 
-	 * @param playerName The player name to effect
+	 * @param detaineeName The player name to effect
 	 */
-	public void removePrisoner(String playerName);
+	public void removeDetainee(String detaineeName);
 	
-	public PrisonCell getPrisonerCell(String playerName);
+	/**
+	 * Get a {@link PrisonDetainee} instance of for the player
+	 * name if that player is imprisoned in this container.
+	 * 
+	 * @param detaineeName The name of the player to get a {@link PrisonDetainee} instance of
+	 * @return The {@link PrisonDetainee} instance or null if that player is not detained within this prisoner container
+	 */
+	public PrisonDetainee getDetainee(String detaineeName);
 	
-	public boolean hasUnsecuredPrisoner(String playerName);
-	public boolean hasUnreleasedPrisoner(String playerName);
-	public boolean hasPrisoner(String playerName);
+	/**
+	 * Get the set of {@link PrisonDetainee} instances which represent the
+	 * prisoners in this prison container.
+	 * 
+	 * @return The set of {@link PrisonDetainee} instances
+	 */
+	public Set<PrisonDetainee> getDetainees();
 	
+	/**
+	 * Returns true if the prisoner container has the prisoner.
+	 * 
+	 * @param detaineeName The name of the prisoner to check for
+	 * @return True if the player is detianed within this prison, false otherwise
+	 */
+	public boolean hasPrisoner(String detaineeName);
+	
+	/**
+	 * Determines if this prisoner container has any prisoners.
+	 * 
+	 * @return True if there are 1 or more detainees, false if there are none
+	 */
 	public boolean hasPrisoners();
 }

@@ -9,9 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import net.marcuswhybrow.minecraft.law.events.LawEvent;
-import net.marcuswhybrow.minecraft.law.interfaces.PrisonerContainer;
-import net.marcuswhybrow.minecraft.law.prison.Prison;
-import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 import net.marcuswhybrow.minecraft.law.utilities.Utils;
 
@@ -58,9 +56,18 @@ public class Law {
 		Law.load();
 		
 		// Create worlds which don't exist yet
+		MessageDispatcher.consoleInfo("Loading worlds...");
 		for (World world : Bukkit.getWorlds()) {
 			if (worlds.containsKey(world.getName()) == false) {
 				this.worlds.put(world.getName(), new LawWorld(world));
+			}
+		}
+		
+		// Schedule all detainee releases
+		MessageDispatcher.consoleInfo("Setting up detainee release times...");
+		for (LawWorld lawWorld : this.worlds.values()) {
+			for (PrisonDetainee detainee : lawWorld.getDetainees()) {
+				detainee.ensureReleaseIsScheduled();
 			}
 		}
 	}
@@ -83,33 +90,6 @@ public class Law {
 	
 	public Collection<LawWorld> getWorlds() {
 		return this.worlds.values();
-	}
-	
-	public static boolean imprisonPlayer(String playerName, PrisonCell cell) {
-		if (cell == null) {
-			throw new IllegalArgumentException("Prisoner container cannot be null");
-		}
-		
-		// Remove the prisoner from the current cell if necessary
-		PrisonCell currentCell = cell.getPrison().getLawWorld().getPrisonerCell(playerName);
-		if (currentCell != null) {
-			currentCell.removePrisoner(playerName);
-		}
-		
-		if (cell.imprisonPlayer(playerName) == false) {
-			return false;
-		}
-		
-		return true;
-	}
-	
-	public static void freePlayer(String playerName, PrisonerContainer prisonerContainer) {
-		PrisonCell cell = prisonerContainer.getPrisonerCell(playerName);
-		if (cell == null) {
-			return;
-		}
-		
-		prisonerContainer.freePlayer(playerName);
 	}
 	
 	/**
@@ -164,10 +144,6 @@ public class Law {
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			
 			for (LawWorld lawWorld : (LawWorld[]) ois.readObject()) {
-				MessageDispatcher.consoleInfo("loading world \"" + lawWorld.getBukkitWorld().getName() + "\"");
-				for (Prison p : lawWorld.getPrisons()) {
-					MessageDispatcher.consoleInfo("  prison: " + p.getName());
-				}
 				get().worlds.put(lawWorld.getName(), lawWorld);
 			}
 			ois.close();

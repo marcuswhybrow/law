@@ -87,12 +87,6 @@ public class LawWorld extends Entity implements Serializable {
 		}
 		return this.bukkitWorld;
 	}
-
-	@Override
-	public boolean imprisonPlayer(String playerName) {
-		// A world cannot imprison a player automatically
-		return false;
-	}
 	
 	@Override
 	public int hashCode() {

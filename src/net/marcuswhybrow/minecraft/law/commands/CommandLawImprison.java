@@ -5,19 +5,21 @@ import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
 import net.marcuswhybrow.minecraft.law.commands.prison.CommandLawPrisonSetExit;
 import net.marcuswhybrow.minecraft.law.commands.prison.cell.CommandLawPrisonCellCreate;
-import net.marcuswhybrow.minecraft.law.events.LawImprisonEvent;
+import net.marcuswhybrow.minecraft.law.events.LawDetainStartEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.Commands;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
+import net.marcuswhybrow.minecraft.law.utilities.Validate;
 
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class CommandLawImprison extends Command {
-	public static final String DEFINITION = "law imprison <player-name> [prison-name] [cell-name]";
+	public static final String DEFINITION = "law imprison <player-name> <time> [prison-name] [cell-name]";
 	public static final String PERMISSION_NODE = "imprisonment.imprison";
 	
 	private static final int SUCCESS = 0;
@@ -27,6 +29,8 @@ public class CommandLawImprison extends Command {
 	private static final int PLAYER_IS_ALREADY_IMPRISONED_IN_THAT_CELL = 4;
 	private static final int PRISON_IS_NOT_OPERATIONAL = 5;
 	private static final int PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME = 6;
+	private static final int ILLEGAL_DURATION_TYPE = 7;
+	private static final int DURATION_IS_NOT_A_NUMBER = 8;
 	
 	private Player player;
 	private LawWorld lawWorld;
@@ -35,6 +39,8 @@ public class CommandLawImprison extends Command {
 	private String targetCellName;
 	private Prison targetPrison;
 	private PrisonCell targetCell;
+	private String formattedTime;
+	private long detentionDuration;
 	
 	public CommandLawImprison() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
@@ -46,16 +52,25 @@ public class CommandLawImprison extends Command {
 		targetPlayerName = null;
 		targetPrisonName = null;
 		targetCellName = null;
+		formattedTime = null;
 	}
 
 	@Override
 	public int onExecute(CommandSender sender, String[] args) {
 		targetPlayerName = args[2];
-		targetPrisonName = args.length >= 4 ? args[3] : null;
-		targetCellName = args.length >= 5 ? args[4] : PrisonCell.DEFAULT_NAME;
+		formattedTime = args[3];
+		targetPrisonName = args.length >= 5 ? args[4] : null;
+		targetCellName = args.length >= 6 ? args[5] : PrisonCell.DEFAULT_NAME;
 		player = (Player) sender;
 		lawWorld = (LawWorld) Law.get().getLawWorldForPlayer(player);
-
+		
+		try {
+			detentionDuration = Validate.getTime(formattedTime);
+		} catch (NumberFormatException e) {
+			return DURATION_IS_NOT_A_NUMBER;
+		} catch (IllegalArgumentException e) {
+			return ILLEGAL_DURATION_TYPE;
+		}
 		
 		targetPrison = targetPrisonName == null ? lawWorld.getSelectedPrison(player.getName()) : lawWorld.getPrison(targetPrisonName);
 		
@@ -92,7 +107,7 @@ public class CommandLawImprison extends Command {
 
 	@Override
 	public void onSuccess() {
-		Law.fireEvent(new LawImprisonEvent(player, targetPlayerName, targetCell));
+		Law.fireEvent(new LawDetainStartEvent(player, new PrisonDetainee(targetPlayerName, targetCell, detentionDuration)));
 	}
 
 	@Override
@@ -121,6 +136,12 @@ public class CommandLawImprison extends Command {
 			break;
 		case PRISON_DOES_NOT_HAVE_CELL_WITH_THAT_NAME:
 			MessageDispatcher.sendMessage(player, Colorise.error("Prison " + Colorise.entity(targetPrison.getName()) + Colorise.error(" does not have a cell with that name.")));
+			break;
+		case ILLEGAL_DURATION_TYPE:
+			MessageDispatcher.sendMessage(player, Colorise.error("A duration may end in the following letters m,h,d,w for minutes, hours, days and weeks respectively, or have no letter to denote seconds."));
+			break;
+		case DURATION_IS_NOT_A_NUMBER:
+			MessageDispatcher.sendMessage(player, Colorise.error("A duration may only have one non-number at the end."));
 			break;
 		}
 	}

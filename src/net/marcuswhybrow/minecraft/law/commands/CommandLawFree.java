@@ -3,9 +3,9 @@ package net.marcuswhybrow.minecraft.law.commands;
 import net.marcuswhybrow.minecraft.law.Law;
 import net.marcuswhybrow.minecraft.law.LawWorld;
 import net.marcuswhybrow.minecraft.law.commands.Command;
-import net.marcuswhybrow.minecraft.law.events.LawFreeEvent;
+import net.marcuswhybrow.minecraft.law.events.LawDetainEndEvent;
 import net.marcuswhybrow.minecraft.law.exceptions.IllegalCommandDefinitionException;
-import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
+import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
@@ -22,7 +22,7 @@ public class CommandLawFree extends Command {
 	private Player player;
 	private LawWorld lawWorld;
 	private String targetPlayerName;
-	private PrisonCell cell;
+	private PrisonDetainee detainee;
 	
 	public CommandLawFree() throws IllegalCommandDefinitionException {
 		super(DEFINITION);
@@ -32,7 +32,7 @@ public class CommandLawFree extends Command {
 		player = null;
 		lawWorld = null;
 		targetPlayerName = null;
-		cell = null;
+		detainee = null;
 	}
 
 	@Override
@@ -41,9 +41,9 @@ public class CommandLawFree extends Command {
 		player = (Player) sender;
 		lawWorld = (LawWorld) Law.get().getLawWorldForPlayer(player);
 		
-		cell = lawWorld.getPrisonerCell(targetPlayerName);
+		detainee = lawWorld.getDetainee(targetPlayerName);
 		
-		if (cell == null) {
+		if (detainee == null) {
 			return PLAYER_IS_NOT_IMPRISONED_IN_THIS_WORLD;
 		}
 		
@@ -52,7 +52,7 @@ public class CommandLawFree extends Command {
 
 	@Override
 	public void onSuccess() {
-		Law.fireEvent(new LawFreeEvent(player, targetPlayerName, cell));
+		Law.fireEvent(new LawDetainEndEvent(player, detainee));
 	}
 
 	@Override

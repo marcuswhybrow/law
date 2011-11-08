@@ -46,17 +46,6 @@ public class PrisonCell extends Entity implements Serializable {
 	}
 	
 	@Override
-	public boolean imprisonPlayer(String playerName) {
-		if (getPrison().isOperational() == false) {
-			return false;
-		}
-		
-		this.addPrisoner(playerName.toLowerCase(), this);
-		
-		return true;
-	}
-	
-	@Override
 	public int hashCode() {
 		if (hashCode == 0) {
 			hashCode = ("PRISONCELL" + this.getPrison().getName() + this.getName()).hashCode();
