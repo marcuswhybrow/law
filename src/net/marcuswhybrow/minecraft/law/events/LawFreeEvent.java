@@ -3,9 +3,10 @@ package net.marcuswhybrow.minecraft.law.events;
 import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 
 public class LawFreeEvent extends LawPrisonDetaineeEvent {
-	private static final long serialVersionUID = -1726278830957239690L;
+	private static final HandlerList handlers = new HandlerList();
 	
 	public LawFreeEvent(final Player sourcePlayer, final PrisonDetainee detainee) {
 		super("LawFreeReleaseEvent");
@@ -17,5 +18,4 @@ public class LawFreeEvent extends LawPrisonDetaineeEvent {
 	public LawFreeEvent(final PrisonDetainee detainee) {
 		this(null, detainee);
 	}
-
 }

@@ -3,9 +3,10 @@ package net.marcuswhybrow.minecraft.law.events;
 import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 
 public class LawImprisonEvent extends LawPrisonDetaineeEvent {
-	private static final long serialVersionUID = 7841604312008447536L;
+	private static final HandlerList handlers = new HandlerList();
 
 	public LawImprisonEvent(final Player sourcePlayer, final PrisonDetainee detainee) {
 		super("LawImprisonSecureEvent");

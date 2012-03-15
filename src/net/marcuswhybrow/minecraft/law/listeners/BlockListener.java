@@ -8,11 +8,14 @@ import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 
-public class BlockListener extends org.bukkit.event.block.BlockListener {
+public class BlockListener implements Listener {
 	private Law law = Law.get();
 	
-	@Override
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockBreak(BlockBreakEvent event) {
 		Player player = event.getPlayer();
 		LawWorld lawWorld;
@@ -26,10 +29,9 @@ public class BlockListener extends org.bukkit.event.block.BlockListener {
 				}
 			}
 		}
-		super.onBlockBreak(event);
 	}
 	
-	@Override
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onBlockPlace(BlockPlaceEvent event) {
 		Player player = event.getPlayer();
 		LawWorld lawWorld;
@@ -43,6 +45,5 @@ public class BlockListener extends org.bukkit.event.block.BlockListener {
 				}
 			}
 		}
-		super.onBlockPlace(event);
 	}
 }

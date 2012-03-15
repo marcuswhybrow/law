@@ -5,11 +5,14 @@ import net.marcuswhybrow.minecraft.law.LawWorld;
 
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 
-public class EntityListener extends  org.bukkit.event.entity.EntityListener {
+public class EntityListener implements Listener {
 	
-	@Override
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onFoodLevelChange(FoodLevelChangeEvent event) {
 		
 		// If the human is a prisoner, do not let their hunger decrease
@@ -32,7 +35,5 @@ public class EntityListener extends  org.bukkit.event.entity.EntityListener {
 				}
 			}
 		}
-		
-		super.onFoodLevelChange(event);
 	}
 }
