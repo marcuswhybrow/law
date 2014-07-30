@@ -271,7 +271,7 @@ public abstract class Command {
 	 * 
 	 * @param sender The sender of the command
 	 * @param commandPermissionNode The command permission node (Excluding the commands base permission)
-	 * @return True if the sender has permission to execute the command, and flase otherwise
+	 * @return True if the sender has permission to execute the command, and false otherwise
 	 */
 	public static boolean checkHasPermission(CommandSender sender, String permissioNode) {
 		return sender.hasPermission(BASE_PERMISSION_NODE + "." + permissioNode);
