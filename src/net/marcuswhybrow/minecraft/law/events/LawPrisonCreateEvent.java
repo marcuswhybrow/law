@@ -1,12 +1,13 @@
 package net.marcuswhybrow.minecraft.law.events;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 
 import net.marcuswhybrow.minecraft.law.prison.Prison;
 
 public class LawPrisonCreateEvent extends LawPrisonEvent {
-	private static final long serialVersionUID = -8892599862223101579L;
-
+	private static final HandlerList handlers = new HandlerList();
+	
 	public LawPrisonCreateEvent(Player sourcePlayer, Prison prison) {
 		super("LawPrisonCreateEvent");
 		

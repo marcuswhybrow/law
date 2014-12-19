@@ -24,8 +24,7 @@ import net.marcuswhybrow.minecraft.law.utilities.Colorise;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
 import org.bukkit.entity.Player;
-import org.bukkit.event.CustomEventListener;
-import org.bukkit.event.Event;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 /**
@@ -34,53 +33,7 @@ import org.bukkit.event.Listener;
  * @author Marcus Whybrow
  *
  */
-public class LawListener extends CustomEventListener implements Listener {
-	
-	/**
-	 * Calls the appropriate method depending on the type of custom event.
-	 * 
-	 * @param event The custom event
-	 */
-	@Override
-	public void onCustomEvent(Event event) {
-		
-		if (event instanceof LawDetainStartEvent) {
-			this.onDetainStart((LawDetainStartEvent) event);
-			
-		} else if (event instanceof LawImprisonEvent) {
-			this.onImprison((LawImprisonEvent) event);
-			
-		} else if (event instanceof LawDetainEndEvent) {
-			this.onDetainEnd((LawDetainEndEvent) event);
-			
-		} else if (event instanceof LawFreeEvent) {
-			this.onFree((LawFreeEvent) event);
-			
-		} else if (event instanceof LawPrisonCreateEvent) {
-			this.onPrisonCreate((LawPrisonCreateEvent) event);
-			
-		} else if (event instanceof LawPrisonDeleteEvent) {
-			this.onPrisonDelete((LawPrisonDeleteEvent) event);
-			
-		} else if (event instanceof LawPrisonSelectEvent) {
-			this.onPrisonSelect((LawPrisonSelectEvent) event);
-			
-		} else if (event instanceof LawPrisonSetExitEvent) {
-			this.onPrisonSetExit((LawPrisonSetExitEvent) event);
-			
-		} else if (event instanceof LawPrisonCellCreateEvent) {
-			this.onPrisonCellCreate((LawPrisonCellCreateEvent) event);
-			
-		} else if (event instanceof LawPrisonCellDeleteEvent) {
-			this.onPrisonCellDelete((LawPrisonCellDeleteEvent) event);
-			
-		} else if (event instanceof LawPrisonCellMoveEvent) {
-			this.onPrisonCellMove((LawPrisonCellMoveEvent) event);
-			
-		}
-		
-		super.onCustomEvent(event);
-	}
+public class LawListener implements Listener {
 	
 	/**
 	 * Called when a playeris detained by another player.
@@ -92,6 +45,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawDetainStartEvent} instance
 	 */
+	@EventHandler
 	public void onDetainStart(LawDetainStartEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -129,6 +83,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawImprisonEvent} instance
 	 */
+	@EventHandler
 	public void onImprison(LawImprisonEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -161,6 +116,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawDetainEndEvent} instance
 	 */
+	@EventHandler
 	public void onDetainEnd(LawDetainEndEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -201,6 +157,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawFreeEvent} instance
 	 */
+	@EventHandler
 	public void onFree(LawFreeEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -230,6 +187,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonCreateEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonCreate(LawPrisonCreateEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -255,6 +213,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonDeleteEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonDelete(LawPrisonDeleteEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -306,6 +265,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonSelectEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonSelect(LawPrisonSelectEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -329,6 +289,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonSetExitEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonSetExit(LawPrisonSetExitEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -352,6 +313,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonCellCreateEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonCellCreate(LawPrisonCellCreateEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -376,6 +338,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonCellDeleteEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonCellDelete(LawPrisonCellDeleteEvent event) {
 		if (event.isCancelled()) {
 			return;
@@ -400,6 +363,7 @@ public class LawListener extends CustomEventListener implements Listener {
 	 * 
 	 * @param event The {@link LawPrisonCellMoveEvent} instance
 	 */
+	@EventHandler
 	public void onPrisonCellMove(LawPrisonCellMoveEvent event) {
 		if (event.isCancelled()) {
 			return;

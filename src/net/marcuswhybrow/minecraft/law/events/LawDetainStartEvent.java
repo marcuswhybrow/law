@@ -3,6 +3,7 @@ package net.marcuswhybrow.minecraft.law.events;
 import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 
 /**
  * Represents the event triggered when a player is imprisoned.
@@ -16,7 +17,7 @@ import org.bukkit.entity.Player;
  *
  */
 public class LawDetainStartEvent extends LawPrisonDetaineeEvent {
-	private static final long serialVersionUID = -6159307465018927999L;
+	private static final HandlerList handlers = new HandlerList();
 
 	public LawDetainStartEvent(final Player sourcePlayer, final PrisonDetainee detainee) {
 		super("LawImprisonEvent");

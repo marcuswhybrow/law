@@ -6,7 +6,6 @@ import net.marcuswhybrow.minecraft.law.listeners.LawListener;
 import net.marcuswhybrow.minecraft.law.listeners.PlayerListener;
 import net.marcuswhybrow.minecraft.law.utilities.MessageDispatcher;
 
-import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,25 +22,18 @@ public class Plugin extends JavaPlugin {
 		
 		// Setup event registrations
 		PluginManager pluginManager = getServer().getPluginManager();
-		PlayerListener playerListener = new PlayerListener();
-		BlockListener blockListener = new BlockListener();
-		EntityListener entityListener = new EntityListener();
-		LawListener lawListener = new LawListener();
 		
 		// player events
-		pluginManager.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Event.Priority.Normal, this);
-		pluginManager.registerEvent(Event.Type.PLAYER_INTERACT, playerListener, Event.Priority.Highest, this);
-		pluginManager.registerEvent(Event.Type.PLAYER_RESPAWN, playerListener, Event.Priority.Highest, this);
+		pluginManager.registerEvents(new PlayerListener(), this);
 		
 		// Entity events
-		pluginManager.registerEvent(Event.Type.FOOD_LEVEL_CHANGE, entityListener, Event.Priority.Highest, this);
+		pluginManager.registerEvents(new EntityListener(), this);
 		
 		// Block events
-		pluginManager.registerEvent(Event.Type.BLOCK_BREAK, blockListener, Event.Priority.Highest, this);
-		pluginManager.registerEvent(Event.Type.BLOCK_PLACE, blockListener, Event.Priority.Highest, this);
+		pluginManager.registerEvents(new BlockListener(), this);
 		
 		// Custom events
-		pluginManager.registerEvent(Event.Type.CUSTOM_EVENT, lawListener, Event.Priority.Lowest, this);
+		pluginManager.registerEvents(new LawListener(), this);
 		
 		// Setup the Law instance
 		law.setup();

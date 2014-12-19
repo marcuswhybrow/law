@@ -14,11 +14,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 
-public class PlayerListener extends org.bukkit.event.player.PlayerListener {
+public class PlayerListener implements Listener {
 	private Law law = Law.get();
 	
-	@Override
+	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		Player player = event.getPlayer();
 		LawWorld lawWorld = law.getLawWorld(player.getWorld());
@@ -41,7 +44,7 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 		}
 	}
 	
-	@Override
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		Player player = event.getPlayer();
 		LawWorld lawWorld;
@@ -72,10 +75,9 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 			}
 		}
 		
-		super.onPlayerInteract(event);
 	}
 	
-	@Override
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerRespawn(PlayerRespawnEvent event) {
 		Player player = event.getPlayer();
 		LawWorld lawWorld = Law.get().getLawWorldForPlayer(player);
@@ -86,6 +88,5 @@ public class PlayerListener extends org.bukkit.event.player.PlayerListener {
 			event.setRespawnLocation(detainee.getPrisonCell().getLocation());
 		}
 		
-		super.onPlayerRespawn(event);
 	}
 }

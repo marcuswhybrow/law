@@ -19,7 +19,7 @@ import org.bukkit.entity.Player;
 
 public class Law {
 	public static final String PLUGIN_NAME = "Law";
-	public static final String PLUGIN_VERSION = "0.1";
+	public static final String PLUGIN_VERSION = "0.2";
 	public static final String ON_ENABLE_MESSAGE = PLUGIN_NAME + " enabled.";
 	public static final String ON_DISABLE_MESSAGE = PLUGIN_NAME + " disabled.";
 	public static final boolean FORCE_FULL_SAVE = true;
@@ -131,21 +131,24 @@ public class Law {
 		
 		if (file.exists() == false) {
 			// try and look for the temp file instead
-			file = new File(stateFileTempPath + separator + "state-temp.dat");
-			if (file.exists() == false) {
+			File f1 = new File(stateFileTempPath + separator + "state-temp.dat");
+			if (f1.exists() == false) {
 				return;
 			} else {
-				file.renameTo(new File(stateFilePath + separator + "state.dat"));
+				f1.renameTo(new File(stateFilePath + separator + "state.dat"));
 			}
 		}
 		
 		try {
 			FileInputStream fis = new FileInputStream(file);
 			ObjectInputStream ois = new ObjectInputStream(fis);
-			
-			for (LawWorld lawWorld : (LawWorld[]) ois.readObject()) {
-				get().worlds.put(lawWorld.getName(), lawWorld);
+			if(ois.available() > 1)
+			{
+				for (LawWorld lawWorld : (LawWorld[]) ois.readObject()) {
+					get().worlds.put(lawWorld.getName(), lawWorld);
+				}
 			}
+			
 			ois.close();
 		} catch (Exception e) {
 			MessageDispatcher.consoleWarning("Could not read state from disk.");

@@ -1,9 +1,11 @@
 package net.marcuswhybrow.minecraft.law.events;
 
+import org.bukkit.event.HandlerList;
+
 import net.marcuswhybrow.minecraft.law.prison.PrisonCell;
 
 public abstract class LawPrisonCellEvent extends LawCommandEvent {
-	private static final long serialVersionUID = 1436085649081600074L;
+	private static final HandlerList handlers = new HandlerList();
 	
 	private PrisonCell prisonCell;
 
@@ -24,5 +26,4 @@ public abstract class LawPrisonCellEvent extends LawCommandEvent {
 	public void setPrisonCell(PrisonCell prisonCell) {
 		this.prisonCell = prisonCell;
 	}
-
 }

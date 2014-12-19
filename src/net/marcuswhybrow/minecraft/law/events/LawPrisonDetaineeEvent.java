@@ -1,9 +1,11 @@
 package net.marcuswhybrow.minecraft.law.events;
 
+import org.bukkit.event.HandlerList;
+
 import net.marcuswhybrow.minecraft.law.prison.PrisonDetainee;
 
 public class LawPrisonDetaineeEvent extends LawCommandEvent {
-	private static final long serialVersionUID = -6190963474099604979L;
+	private static final HandlerList handlers = new HandlerList();
 	
 	/** The prison detainee which is the subject of this event. */
 	private PrisonDetainee detainee;

@@ -1,9 +1,10 @@
 package net.marcuswhybrow.minecraft.law.events;
 
 import org.bukkit.entity.Player;
+import org.bukkit.event.HandlerList;
 
 public abstract class LawCommandEvent extends LawEvent {
-	private static final long serialVersionUID = -6492491601711901151L;
+	private static final HandlerList handlers = new HandlerList();
 	
 	/** The player which initiated the command. */
 	private Player sourcePlayer;
@@ -25,5 +26,4 @@ public abstract class LawCommandEvent extends LawEvent {
 	public void setSourcePlayer(Player sourcePlayer) {
 		this.sourcePlayer = sourcePlayer;
 	}
-
 }
